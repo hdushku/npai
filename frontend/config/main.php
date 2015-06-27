@@ -12,6 +12,16 @@ return [
     'bootstrap' => ['log'],
     'controllerNamespace' => 'frontend\controllers',
     'components' => [
+        'authClientCollection' => [
+        'class' => 'yii\authclient\Collection',
+        'clients' => [
+            'google' => [
+                'class' => 'yii\authclient\clients\GoogleOAuth',
+                'clientId' => '73014911751-ri0pnl06b477jv2ft32dr04isv0d5313.apps.googleusercontent.com',
+                'clientSecret' => 'rLSGBXmbA_dV-D0RQ2yKEMAB',
+            ],
+        ],
+    ],
         'user' => [
             'identityClass' => 'common\models\User',
             'enableAutoLogin' => true,
