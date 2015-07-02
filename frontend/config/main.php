@@ -9,7 +9,14 @@ $params = array_merge(
 return [
     'id' => 'app-frontend',
     'basePath' => dirname(__DIR__),
-    'bootstrap' => ['log'],
+    'bootstrap' => ['log','gii'],
+    'modules' => [
+        'gii' => 'yii\gii\Module',
+        'gridview' => [
+            'class' => '\kartik\grid\Module',
+        ],
+        // ...
+    ],
     'controllerNamespace' => 'frontend\controllers',
     'components' => [
         'authClientCollection' => [

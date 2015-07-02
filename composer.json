@@ -19,7 +19,15 @@
         "yiisoft/yii2-bootstrap": "*",
         "raoul2000/yii2-bootswatch-asset": "*",
         "yiisoft/yii2-authclient": "~2.0.0",
+        "johnitvn/yii2-ajaxcrud": "*",
+        "2amigos/yii2-taggable-behavior": "~1.0",
+        "2amigos/yii2-selectize-widget": "~1.0",
         "yiisoft/yii2-swiftmailer": "*"
+    },
+    "autoload": {
+        "psr-4": {
+            "johnitvn\\ajaxcrudassets\\": ""
+        }
     },
     "require-dev": {
         "yiisoft/yii2-codeception": "*",
