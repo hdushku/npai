@@ -3,6 +3,8 @@ namespace common\models;
 
 use Yii;
 use yii\base\Model;
+use yii\web\NotFoundHttpException;
+use common\models\PermissionHelpers;
 
 /**
  * Login form
@@ -15,10 +17,18 @@ class LoginForm extends Model
 
     private $_user = false;
 
-
     /**
      * @inheritdoc
      */
+    public function attributeLabels()
+    {
+        return [
+            'username' => Yii::t('app', 'Username'),
+            'password' => Yii::t('app', 'Password'),
+            'rememberMe' => Yii::t('app', 'Remember me'),
+        ];
+    }
+    
     public function rules()
     {
         return [
@@ -74,5 +84,18 @@ class LoginForm extends Model
         }
 
         return $this->_user;
+    }
+    public function loginAdmin()
+    {
+        if (($this->validate()) && PermissionHelpers::requireMinimumRole('Admin', $this->getUser()->id)) {
+
+            return Yii::$app->user->login($this->getUser(), $this->rememberMe ? 3600 * 24 * 30 : 0);
+
+        } else {
+
+                throw new NotFoundHttpException('You Shall Not Pass.');
+
+        }
+
     }
 }

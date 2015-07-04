@@ -33,6 +33,14 @@ AppAsset::register($this);
             ]);
             $menuItems = [
                 ['label' => 'Home', 'url' => ['/site/index']],
+                ['label' => 'Post', 'url' => ['/post']],
+                ['label' => 'Comment', 'url' => ['/comment']],
+                ['label' => 'Lookup', 'url' => ['/lookup']],
+                ['label' => 'Tag', 'url' => ['/tag']],
+                ['label' => 'Role', 'url' => ['/role']],
+                ['label' => 'Status', 'url' => ['/status']],
+                ['label' => 'User Type', 'url' => ['/user-type']],
+                ['label' => 'User', 'url' => ['/user']],
             ];
             if (Yii::$app->user->isGuest) {
                 $menuItems[] = ['label' => 'Login', 'url' => ['/site/login']];

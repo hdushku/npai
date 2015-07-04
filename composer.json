@@ -22,6 +22,7 @@
         "johnitvn/yii2-ajaxcrud": "*",
         "2amigos/yii2-taggable-behavior": "~1.0",
         "2amigos/yii2-selectize-widget": "~1.0",
+        "yii2mod/yii2-cms": "*",
         "yiisoft/yii2-swiftmailer": "*"
     },
     "autoload": {
