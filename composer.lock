@@ -4,8 +4,73 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "hash": "3b94e81ba9b53822075e044bb32e8813",
+    "hash": "e9ea9a6085d8da9fd71a76fbe4385a56",
     "packages": [
+        {
+            "name": "2amigos/yii2-gallery-widget",
+            "version": "1.0.1",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/2amigos/yii2-gallery-widget.git",
+                "reference": "77b82b4a4d33a5cb9013220ff843de75984e7e82"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/2amigos/yii2-gallery-widget/zipball/77b82b4a4d33a5cb9013220ff843de75984e7e82",
+                "reference": "77b82b4a4d33a5cb9013220ff843de75984e7e82",
+                "shasum": ""
+            },
+            "require": {
+                "bower-asset/blueimp-gallery": "~2.15.0",
+                "yiisoft/yii2": "~2.0.0"
+            },
+            "require-dev": {
+                "phpunit/phpunit": "~4.0"
+            },
+            "type": "yii2-extension",
+            "extra": {
+                "asset-installer-paths": {
+                    "npm-asset-library": "vendor/npm",
+                    "bower-asset-library": "vendor/bower"
+                },
+                "branch-alias": {
+                    "dev-master": "1.0-dev"
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "dosamigos\\gallery\\": "src"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "BSD-3-Clause"
+            ],
+            "authors": [
+                {
+                    "name": "2amigOS! Consulting Group",
+                    "email": "hola@2amigos.us",
+                    "homepage": "http://2amigos.us",
+                    "role": "Developer"
+                },
+                {
+                    "name": "Alexander Kochetov",
+                    "email": "creocoder@gmail.com",
+                    "role": "Developer"
+                }
+            ],
+            "description": "Blueimp gallery widget for the Yii framework",
+            "homepage": "https://github.com/2amigos/yii2-gallery-widget",
+            "keywords": [
+                "2amigos",
+                "gallery",
+                "widget",
+                "yii",
+                "yii 2",
+                "yii2"
+            ],
+            "time": "2015-04-12 22:21:58"
+        },
         {
             "name": "2amigos/yii2-selectize-widget",
             "version": "1.0.1",
@@ -138,6 +203,68 @@
             "time": "2015-04-30 22:16:31"
         },
         {
+            "name": "bower-asset/blueimp-gallery",
+            "version": "2.15.2",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/blueimp/Gallery.git",
+                "reference": "a20d8735def7fd964ef90c2ab5c9505ff1f69f8d"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/blueimp/Gallery/zipball/a20d8735def7fd964ef90c2ab5c9505ff1f69f8d",
+                "reference": "a20d8735def7fd964ef90c2ab5c9505ff1f69f8d",
+                "shasum": ""
+            },
+            "type": "bower-asset-library",
+            "extra": {
+                "bower-asset-main": [
+                    "css/blueimp-gallery.css",
+                    "css/blueimp-gallery-indicator.css",
+                    "css/blueimp-gallery-video.css",
+                    "img/error.png",
+                    "img/error.svg",
+                    "img/loading.gif",
+                    "img/play-pause.png",
+                    "img/play-pause.svg",
+                    "img/video-play.png",
+                    "img/video-play.svg",
+                    "js/blueimp-helper.js",
+                    "js/blueimp-gallery.js",
+                    "js/blueimp-gallery-fullscreen.js",
+                    "js/blueimp-gallery-indicator.js",
+                    "js/blueimp-gallery-video.js",
+                    "js/blueimp-gallery-vimeo.js",
+                    "js/blueimp-gallery-youtube.js"
+                ],
+                "bower-asset-ignore": [
+                    "/*.*",
+                    "css/demo.css",
+                    "js/demo.js"
+                ]
+            },
+            "description": "blueimp Gallery is a touch-enabled, responsive and customizable image and video gallery, carousel and lightbox, optimized for both mobile and desktop web browsers. It features swipe, mouse and keyboard navigation, transition effects, slideshow functionality, fullscreen support and on-demand content loading and can be extended to display additional content types.",
+            "keywords": [
+                "carousel",
+                "desktop",
+                "effects",
+                "fullscreen",
+                "gallery",
+                "image",
+                "keyboard",
+                "lightbox",
+                "mobile",
+                "mouse",
+                "navigation",
+                "responsive",
+                "slideshow",
+                "swipe",
+                "touch",
+                "transition",
+                "video"
+            ]
+        },
+        {
             "name": "bower-asset/bootstrap",
             "version": "v3.3.5",
             "source": {
@@ -187,6 +314,69 @@
             ]
         },
         {
+            "name": "bower-asset/fastclick",
+            "version": "v1.0.6",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/ftlabs/fastclick.git",
+                "reference": "9977a916739360ad4ffd7aa19b0016bf375e934b"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/ftlabs/fastclick/zipball/9977a916739360ad4ffd7aa19b0016bf375e934b",
+                "reference": "9977a916739360ad4ffd7aa19b0016bf375e934b",
+                "shasum": ""
+            },
+            "type": "bower-asset-library",
+            "extra": {
+                "bower-asset-main": "lib/fastclick.js",
+                "bower-asset-ignore": [
+                    "**/.*",
+                    "component.json",
+                    "package.json",
+                    "Makefile",
+                    "tests",
+                    "examples"
+                ]
+            }
+        },
+        {
+            "name": "bower-asset/foundation",
+            "version": "5.4.7",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/zurb/bower-foundation.git",
+                "reference": "4371fdca68a2635a7000c9f5567ff9bb62d2a687"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/zurb/bower-foundation/zipball/4371fdca68a2635a7000c9f5567ff9bb62d2a687",
+                "reference": "4371fdca68a2635a7000c9f5567ff9bb62d2a687",
+                "shasum": ""
+            },
+            "require": {
+                "bower-asset/fastclick": ">=0.6.11",
+                "bower-asset/jquery": ">=2.1.0",
+                "bower-asset/jquery-placeholder": ">=2.0.7,<2.1",
+                "bower-asset/jquery.cookie": ">=1.4.0,<1.5",
+                "bower-asset/modernizr": ">=2.7.2"
+            },
+            "require-dev": {
+                "bower-asset/jquery.autocomplete": "1.2.9",
+                "bower-asset/lodash": ">=2.4.1,<2.5"
+            },
+            "type": "bower-asset-library",
+            "extra": {
+                "bower-asset-main": [
+                    "css/foundation.css",
+                    "css/foundation.css.map",
+                    "js/foundation.js"
+                ],
+                "bower-asset-ignore": [],
+                "bower-asset-private": true
+            }
+        },
+        {
             "name": "bower-asset/jquery",
             "version": "2.1.4",
             "source": {
@@ -229,6 +419,77 @@
                 "jquery",
                 "library"
             ]
+        },
+        {
+            "name": "bower-asset/jquery-placeholder",
+            "version": "v2.0.9",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/mathiasbynens/jquery-placeholder.git",
+                "reference": "510a577397713934b46ccaceaa7ecc558cff313a"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/mathiasbynens/jquery-placeholder/zipball/510a577397713934b46ccaceaa7ecc558cff313a",
+                "reference": "510a577397713934b46ccaceaa7ecc558cff313a",
+                "shasum": ""
+            },
+            "require": {
+                "bower-asset/jquery": ">=1.6"
+            },
+            "type": "bower-asset-library",
+            "extra": {
+                "bower-asset-main": [
+                    "jquery.placeholder.js"
+                ],
+                "bower-asset-ignore": [
+                    "*",
+                    "!/bower.json",
+                    "!/jquery.placeholder.js"
+                ]
+            },
+            "license": [
+                "MIT"
+            ],
+            "description": "A jQuery plugin that enables HTML5 placeholder behavior for browsers that aren’t trying hard enough yet",
+            "keywords": [
+                "form",
+                "jQuery",
+                "jquery-plugin",
+                "placeholder"
+            ]
+        },
+        {
+            "name": "bower-asset/jquery.cookie",
+            "version": "v1.4.1",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/carhartl/jquery-cookie.git",
+                "reference": "7f88a4e631aba8a8c688fd8999ce6b9bcfd50718"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/carhartl/jquery-cookie/zipball/7f88a4e631aba8a8c688fd8999ce6b9bcfd50718",
+                "reference": "7f88a4e631aba8a8c688fd8999ce6b9bcfd50718",
+                "shasum": ""
+            },
+            "require": {
+                "bower-asset/jquery": ">=1.2"
+            },
+            "type": "bower-asset-library",
+            "extra": {
+                "bower-asset-main": [
+                    "./jquery.cookie.js"
+                ],
+                "bower-asset-ignore": [
+                    "test",
+                    ".*",
+                    "*.json",
+                    "*.md",
+                    "*.txt",
+                    "Gruntfile.js"
+                ]
+            }
         },
         {
             "name": "bower-asset/jquery.inputmask",
@@ -319,6 +580,22 @@
                 "plugins",
                 "require"
             ]
+        },
+        {
+            "name": "bower-asset/modernizr",
+            "version": "v2010.07.06",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/Modernizr/Modernizr.git",
+                "reference": "0178be01bed4093cedda1f7c099b66ce475de131"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/Modernizr/Modernizr/zipball/0178be01bed4093cedda1f7c099b66ce475de131",
+                "reference": "0178be01bed4093cedda1f7c099b66ce475de131",
+                "shasum": ""
+            },
+            "type": "bower-asset-library"
         },
         {
             "name": "bower-asset/punycode",
@@ -513,6 +790,61 @@
             ]
         },
         {
+            "name": "bupy7/yii2-embed",
+            "version": "dev-master",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/bupy7/yii2-embed.git",
+                "reference": "e91309d84d9a8f2e7fd642807e722f31a9ddf34a"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/bupy7/yii2-embed/zipball/e91309d84d9a8f2e7fd642807e722f31a9ddf34a",
+                "reference": "e91309d84d9a8f2e7fd642807e722f31a9ddf34a",
+                "shasum": ""
+            },
+            "require": {
+                "embed/embed": "2.*",
+                "yiisoft/yii2": "*"
+            },
+            "type": "yii2-extension",
+            "autoload": {
+                "psr-4": {
+                    "bupy7\\embed\\": ""
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "BSD-3-Clause"
+            ],
+            "authors": [
+                {
+                    "name": "Belosludcev Vasilij",
+                    "email": "bupy765@gmail.com",
+                    "homepage": "http://mihaly4.ru"
+                }
+            ],
+            "description": "Wrapper for PHP library https://github.com/oscarotero/Embed to get information from any web page.",
+            "homepage": "https://github.com/bupy7/yii2-embed",
+            "keywords": [
+                "embed",
+                "extension",
+                "faccebook",
+                "instagram",
+                "oembed",
+                "opengraph",
+                "rutube",
+                "twitter-cards",
+                "video",
+                "vimeo",
+                "vkontakte",
+                "widget",
+                "yii2",
+                "youtube"
+            ],
+            "time": "2015-04-06 17:40:05"
+        },
+        {
             "name": "cebe/markdown",
             "version": "1.1.0",
             "source": {
@@ -573,6 +905,53 @@
             "time": "2015-03-06 05:28:07"
         },
         {
+            "name": "embed/embed",
+            "version": "v2.2.3",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/oscarotero/Embed.git",
+                "reference": "f29633a2cb97c6905947b8d5023aea1ee712711c"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/oscarotero/Embed/zipball/f29633a2cb97c6905947b8d5023aea1ee712711c",
+                "reference": "f29633a2cb97c6905947b8d5023aea1ee712711c",
+                "shasum": ""
+            },
+            "require": {
+                "ext-curl": "*",
+                "php": ">=5.4.0"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Embed\\": "src"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Oscar Otero",
+                    "email": "oom@oscarotero.com",
+                    "homepage": "http://oscarotero.com",
+                    "role": "Developer"
+                }
+            ],
+            "description": "PHP library to retrieve page info using oembed, opengraph, etc",
+            "homepage": "https://github.com/oscarotero/Embed",
+            "keywords": [
+                "embed",
+                "embedly",
+                "oembed",
+                "opengraph",
+                "twitter cards"
+            ],
+            "time": "2015-05-12 18:00:24"
+        },
+        {
             "name": "ezyang/htmlpurifier",
             "version": "v4.6.0",
             "source": {
@@ -618,21 +997,22 @@
         },
         {
             "name": "johnitvn/yii2-ajaxcrud",
-            "version": "1.0.3",
+            "version": "1.0.4",
             "source": {
                 "type": "git",
                 "url": "https://github.com/johnitvn/yii2-ajaxcrud.git",
-                "reference": "e7c659285e01ea63c2be86b1864fb62f37b33307"
+                "reference": "8657044442bb746c5d2d8f944e0adbaf43b820dd"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/johnitvn/yii2-ajaxcrud/zipball/e7c659285e01ea63c2be86b1864fb62f37b33307",
-                "reference": "e7c659285e01ea63c2be86b1864fb62f37b33307",
+                "url": "https://api.github.com/repos/johnitvn/yii2-ajaxcrud/zipball/8657044442bb746c5d2d8f944e0adbaf43b820dd",
+                "reference": "8657044442bb746c5d2d8f944e0adbaf43b820dd",
                 "shasum": ""
             },
             "require": {
                 "johnitvn/yii2-ajaxcrud-assets": "*",
                 "yiisoft/yii2": "~2.0.4",
+                "yiisoft/yii2-bootstrap": "*",
                 "yiisoft/yii2-gii": "~2.0.4"
             },
             "type": "yii2-extension",
@@ -651,7 +1031,8 @@
             "authors": [
                 {
                     "name": "John Martin",
-                    "email": "john.itvn@gmail.com"
+                    "email": "john.itvn@gmail.com",
+                    "homepage": "https://github.com/johnitvn?tab=repositories"
                 }
             ],
             "description": "Gii CRUD template for Single Page Ajax Administration for yii2",
@@ -664,20 +1045,20 @@
                 "template",
                 "yii2"
             ],
-            "time": "2015-06-30 09:32:01"
+            "time": "2015-07-03 20:30:17"
         },
         {
             "name": "johnitvn/yii2-ajaxcrud-assets",
-            "version": "1.0.0",
+            "version": "1.0.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/johnitvn/yii2-ajaxcrud-assets.git",
-                "reference": "d6cc968c3b166313eee3ea02f7cab632d550e3b4"
+                "reference": "3468630541f94c1bf0a1bc8e36909e669c147ee4"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/johnitvn/yii2-ajaxcrud-assets/zipball/d6cc968c3b166313eee3ea02f7cab632d550e3b4",
-                "reference": "d6cc968c3b166313eee3ea02f7cab632d550e3b4",
+                "url": "https://api.github.com/repos/johnitvn/yii2-ajaxcrud-assets/zipball/3468630541f94c1bf0a1bc8e36909e669c147ee4",
+                "reference": "3468630541f94c1bf0a1bc8e36909e669c147ee4",
                 "shasum": ""
             },
             "require": {
@@ -702,7 +1083,7 @@
                 }
             ],
             "description": "Asset Bundle for yii2-ajaxcrud extension",
-            "time": "2015-06-30 13:39:13"
+            "time": "2015-07-03 12:37:28"
         },
         {
             "name": "kartik-v/bootstrap-popover-x",
@@ -1025,6 +1406,48 @@
             "time": "2015-07-01 16:51:32"
         },
         {
+            "name": "nonzod/yii2-foundation",
+            "version": "dev-master",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/nonzod/yii2-foundation.git",
+                "reference": "f45a97db40951dd775545a7ecf728882278bd8a1"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/nonzod/yii2-foundation/zipball/f45a97db40951dd775545a7ecf728882278bd8a1",
+                "reference": "f45a97db40951dd775545a7ecf728882278bd8a1",
+                "shasum": ""
+            },
+            "require": {
+                "bower-asset/foundation": "5.4.*",
+                "yiisoft/yii2": "*"
+            },
+            "type": "yii2-extension",
+            "autoload": {
+                "psr-4": {
+                    "nonzod\\foundation\\": ""
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "BSD-3-Clause"
+            ],
+            "authors": [
+                {
+                    "name": "Nicola Tomassoni",
+                    "email": "nicola@digisin.it",
+                    "homepage": "http://www.digisin.it/"
+                }
+            ],
+            "description": "The Foundation extension for the Yii framework",
+            "keywords": [
+                "foundation",
+                "yii2"
+            ],
+            "time": "2014-12-03 17:37:34"
+        },
+        {
             "name": "phpspec/php-diff",
             "version": "v1.0.2",
             "source": {
@@ -1167,7 +1590,7 @@
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/thomaspark/bootswatch/zipball/57a25bd6da65fcc034c2029c0390272830572b93",
+                "url": "https://api.github.com/repos/thomaspark/bootswatch/zipball/f6c0658770d4a002adbecc95a2f1fd0c8534a7ed",
                 "reference": "57a25bd6da65fcc034c2029c0390272830572b93",
                 "shasum": ""
             },
@@ -1747,7 +2170,10 @@
     ],
     "aliases": [],
     "minimum-stability": "stable",
-    "stability-flags": [],
+    "stability-flags": {
+        "nonzod/yii2-foundation": 20,
+        "bupy7/yii2-embed": 20
+    },
     "prefer-stable": false,
     "prefer-lowest": false,
     "platform": {

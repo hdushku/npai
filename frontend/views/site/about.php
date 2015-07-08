@@ -18,3 +18,19 @@ use frontend\components\HelloWidget;
 ?>
 <?= HelloWidget::widget(['message' => 'Good morning here']) ?>
 
+
+<?php $items = [
+    [
+        'title' => 'Sintel',
+        'href' => 'http://media.w3.org/2010/05/sintel/trailer.mp4',
+        'type' => 'video/mp4',
+        'poster' => 'http://media.w3.org/2010/05/sintel/poster.png'
+    ],
+];?>
+<?= dosamigos\gallery\Carousel::widget([
+    'items' => $items, 'json' => true,
+    'clientEvents' => [
+        'onslide' => 'function(index, slide) {
+            console.log(slide);
+        }'
+]]);

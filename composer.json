@@ -22,8 +22,12 @@
         "johnitvn/yii2-ajaxcrud": "*",
         "2amigos/yii2-taggable-behavior": "~1.0",
         "2amigos/yii2-selectize-widget": "~1.0",
-        "yii2mod/yii2-cms": "*",
-        "yiisoft/yii2-swiftmailer": "*"
+        "embed/embed": "2.2.3",
+        "yiisoft/yii2-swiftmailer": "*",
+        "nonzod/yii2-foundation": "dev-master",
+        "2amigos/yii2-gallery-widget": "~1.0",
+        "bower-asset/blueimp-gallery": "~2.15.0",
+        "bupy7/yii2-embed": "@dev"
     },
     "autoload": {
         "psr-4": {

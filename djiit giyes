@@ -1,0 +1,2764 @@
+[33mcommit 1cb61554a65c154d23e1413d19f224680e505706[m
+Author: hdushku <hajdardushku@gmail.com>
+Date:   Sat Jul 4 12:11:21 2015 +0200
+
+    added tables and made model, views and controllers for frontend and backend
+
+[1mdiff --git a/backend/config/main.php b/backend/config/main.php[m
+[1mindex a0b5fc9..119323c 100644[m
+[1m--- a/backend/config/main.php[m
+[1m+++ b/backend/config/main.php[m
+[36m@@ -11,7 +11,12 @@[m [mreturn [[m
+     'basePath' => dirname(__DIR__),[m
+     'controllerNamespace' => 'backend\controllers',[m
+     'bootstrap' => ['log'],[m
+[31m-    'modules' => [],[m
+[32m+[m[32m    'modules' => [[m
+[32m+[m[32m        'gii' => 'yii\gii\Module',[m
+[32m+[m[32m        'gridview' => [[m
+[32m+[m[32m            'class' => '\kartik\grid\Module',[m
+[32m+[m[32m        ],[m
+[32m+[m[32m    ],[m
+     'components' => [[m
+         'user' => [[m
+             'identityClass' => 'common\models\User',[m
+[1mdiff --git a/backend/controllers/CommentController.php b/backend/controllers/CommentController.php[m
+[1mnew file mode 100644[m
+[1mindex 0000000..93909f4[m
+[1m--- /dev/null[m
+[1m+++ b/backend/controllers/CommentController.php[m
+[36m@@ -0,0 +1,224 @@[m
+[32m+[m[32m<?php[m
+[32m+[m
+[32m+[m[32mnamespace backend\controllers;[m
+[32m+[m
+[32m+[m[32muse Yii;[m
+[32m+[m[32muse common\models\Comment;[m
+[32m+[m[32muse common\models\search\CommentSearch;[m
+[32m+[m[32muse yii\web\Controller;[m
+[32m+[m[32muse yii\web\NotFoundHttpException;[m
+[32m+[m[32muse yii\filters\VerbFilter;[m
+[32m+[m[32muse yii\grid\GridView;[m
+[32m+[m[32muse \yii\web\Response;[m
+[32m+[m
+[32m+[m[32m/**[m
+[32m+[m[32m * CommentController implements the CRUD actions for Comment model.[m
+[32m+[m[32m */[m
+[32m+[m[32mclass CommentController extends Controller[m
+[32m+[m[32m{[m
+[32m+[m[32m    /**[m
+[32m+[m[32m     * @inheritdoc[m
+[32m+[m[32m     */[m
+[32m+[m[32m    public function behaviors()[m
+[32m+[m[32m    {[m
+[32m+[m[32m        return [[m
+[32m+[m[32m            'verbs' => [[m
+[32m+[m[32m                'class' => VerbFilter::className(),[m
+[32m+[m[32m                'actions' => [[m
+[32m+[m[32m                    'delete' => ['post'],[m
+[32m+[m[32m                    'bulk-delete' => ['post'],[m
+[32m+[m[32m                ],[m
+[32m+[m[32m            ],[m
+[32m+[m[32m        ];[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    /**[m
+[32m+[m[32m     * Lists all Comment models.[m
+[32m+[m[32m     * @return mixed[m
+[32m+[m[32m     */[m
+[32m+[m[32m    public function actionIndex()[m
+[32m+[m[32m    {[m[41m    [m
+[32m+[m[32m        $searchModel = new CommentSearch();[m
+[32m+[m[32m        $dataProvider = $searchModel->search(Yii::$app->request->queryParams);[m
+[32m+[m
+[32m+[m[32m        return $this->render('index', [[m
+[32m+[m[32m            'searchModel' => $searchModel,[m
+[32m+[m[32m            'dataProvider' => $dataProvider,[m
+[32m+[m[32m        ]);[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m
+[32m+[m[32m    /**[m
+[32m+[m[32m     * Displays a single Comment model.[m
+[32m+[m[32m     * @param integer $id[m
+[32m+[m[32m     * @return mixed[m
+[32m+[m[32m     */[m
+[32m+[m[32m    public function actionView($id)[m
+[32m+[m[32m    {[m[41m   [m
+[32m+[m[32m        $request = Yii::$app->request;[m
+[32m+[m[32m        if($request->isAjax){[m
+[32m+[m[32m            Yii::$app->response->format = Response::FORMAT_JSON;[m
+[32m+[m[32m            return [[m
+[32m+[m[32m                    'code'=>'200',[m
+[32m+[m[32m                    'message'=>'OK',[m
+[32m+[m[32m                    'data'=>$this->renderPartial('view', [[m
+[32m+[m[32m                        'model' => $this->findModel($id),[m
+[32m+[m[32m                    ])[m
+[32m+[m[32m                ];[m[41m    [m
+[32m+[m[32m        }else{[m
+[32m+[m[32m            return $this->render('view', [[m
+[32m+[m[32m                'model' => $this->findModel($id),[m
+[32m+[m[32m            ]);[m
+[32m+[m[32m        }[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    /**[m
+[32m+[m[32m     * Creates a new Comment model.[m
+[32m+[m[32m     * For ajax request will return json object[m
+[32m+[m[32m     * and for non-ajax request if creation is successful, the browser will be redirected to the 'view' page.[m
+[32m+[m[32m     * @return mixed[m
+[32m+[m[32m     */[m
+[32m+[m[32m    public function actionCreate()[m
+[32m+[m[32m    {[m
+[32m+[m[32m        $request = Yii::$app->request;[m
+[32m+[m[32m        $model = new Comment();[m[41m  [m
+[32m+[m
+[32m+[m[32m        if($request->isAjax){[m
+[32m+[m[32m            /*[m
+[32m+[m[32m            *   Process for ajax request[m
+[32m+[m[32m            */[m
+[32m+[m[32m            Yii::$app->response->format = Response::FORMAT_JSON;[m
+[32m+[m[32m            if($request->isGet){[m
+[32m+[m[32m                return [[m
+[32m+[m[32m                    'code'=>'200',[m
+[32m+[m[32m                    'message'=>'OK',[m
+[32m+[m[32m                    'data'=>$this->renderPartial('create', [[m
+[32m+[m[32m                        'model' => $model,[m
+[32m+[m[32m                    ]),[m
+[32m+[m[32m                ];[m[41m         [m
+[32m+[m[32m            }else if($model->load($request->post()) && $model->save()){[m
+[32m+[m[32m                return [[m
+[32m+[m[32m                    'code'=>'200',[m
+[32m+[m[32m                    'message'=>'Create Comment success',[m
+[32m+[m[32m                ];[m
+[32m+[m[32m            }else{[m
+[32m+[m[32m                return [[m
+[32m+[m[32m                    'code'=>'400',[m
+[32m+[m[32m                    'message'=>'Validate error',[m
+[32m+[m[32m                    'data'=>$this->renderPartial('create', [[m
+[32m+[m[32m                        'model' => $model,[m
+[32m+[m[32m                    ]),[m
+[32m+[m[32m                ];[m[41m         [m
+[32m+[m[32m            }[m
+[32m+[m[32m        }else{[m
+[32m+[m[32m            /*[m
+[32m+[m[32m            *   Process for non-ajax request[m
+[32m+[m[32m            */[m
+[32m+[m[32m            if ($model->load($request->post()) && $model->save()) {[m
+[32m+[m[32m                return $this->redirect(['view', 'id' => $model->id]);[m
+[32m+[m[32m            } else {[m
+[32m+[m[32m                return $this->render('create', [[m
+[32m+[m[32m                    'model' => $model,[m
+[32m+[m[32m                ]);[m
+[32m+[m[32m            }[m
+[32m+[m[32m        }[m
+[32m+[m[41m       [m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    /**[m
+[32m+[m[32m     * Updates an existing Comment model.[m
+[32m+[m[32m     * For ajax request will return json object[m
+[32m+[m[32m     * and for non-ajax request if update is successful, the browser will be redirected to the 'view' page.[m
+[32m+[m[32m     * @param integer $id[m
+[32m+[m[32m     * @return mixed[m
+[32m+[m[32m     */[m
+[32m+[m[32m    public function actionUpdate($id)[m
+[32m+[m[32m    {[m
+[32m+[m[32m        $request = Yii::$app->request;[m
+[32m+[m[32m        $model = $this->findModel($id);[m[41m       [m
+[32m+[m
+[32m+[m[32m        if($request->isAjax){[m
+[32m+[m[32m            /*[m
+[32m+[m[32m            *   Process for ajax request[m
+[32m+[m[32m            */[m
+[32m+[m[32m            Yii::$app->response->format = Response::FORMAT_JSON;[m
+[32m+[m[32m            if($request->isGet){[m
+[32m+[m[32m                return [[m
+[32m+[m[32m                    'code'=>'200',[m
+[32m+[m[32m                    'message'=>'OK',[m
+[32m+[m[32m                    'data'=>$this->renderPartial('update', [[m
+[32m+[m[32m                        'model' => $model,[m
+[32m+[m[32m                    ]),[m
+[32m+[m[32m                ];[m[41m         [m
+[32m+[m[32m            }else if($model->load($request->post()) && $model->save()){[m
+[32m+[m[32m                return [[m
+[32m+[m[32m                    'code'=>'200',[m
+[32m+[m[32m                    'message'=>'Create Comment success',[m
+[32m+[m[32m                ];[m
+[32m+[m[32m            }else{[m
+[32m+[m[32m                return [[m
+[32m+[m[32m                    'code'=>'400',[m
+[32m+[m[32m                    'message'=>'Validate error',[m
+[32m+[m[32m                    'data'=>$this->renderPartial('update', [[m
+[32m+[m[32m                        'model' => $model,[m
+[32m+[m[32m                    ]),[m
+[32m+[m[32m                ];[m[41m         [m
+[32m+[m[32m            }[m
+[32m+[m[32m        }else{[m
+[32m+[m[32m            /*[m
+[32m+[m[32m            *   Process for non-ajax request[m
+[32m+[m[32m            */[m
+[32m+[m[32m            if ($model->load($request->post()) && $model->save()) {[m
+[32m+[m[32m                return $this->redirect(['view', 'id' => $model->id]);[m
+[32m+[m[32m            } else {[m
+[32m+[m[32m                return $this->render('update', [[m
+[32m+[m[32m                    'model' => $model,[m
+[32m+[m[32m                ]);[m
+[32m+[m[32m            }[m
+[32m+[m[32m        }[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    /**[m
+[32m+[m[32m     * Delete an existing Comment model.[m
+[32m+[m[32m     * For ajax request will return json object[m
+[32m+[m[32m     * and for non-ajax request if deletion is successful, the browser will be redirected to the 'index' page.[m
+[32m+[m[32m     * @param integer $id[m
+[32m+[m[32m     * @return mixed[m
+[32m+[m[32m     */[m
+[32m+[m[32m    public function actionDelete($id)[m
+[32m+[m[32m    {[m
+[32m+[m[32m        $this->findModel($id)->delete();[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m     /**[m
+[32m+[m[32m     * Delete multiple existing Comment model.[m
+[32m+[m[32m     * For ajax request will return json object[m
+[32m+[m[32m     * and for non-ajax request if deletion is successful, the browser will be redirected to the 'index' page.[m
+[32m+[m[32m     * @param integer $id[m
+[32m+[m[32m     * @return mixed[m
+[32m+[m[32m     */[m
+[32m+[m[32m    public function actionBulkDelete()[m
+[32m+[m[32m    {[m[41m        [m
+[32m+[m[32m        $request = Yii::$app->request;[m
+[32m+[m[32m        $pks = $request->post('pks'); // Array or selected records primary keys[m
+[32m+[m[32m        foreach (Comment::findAll(json_decode($pks)) as $model) {[m
+[32m+[m[32m            $model->delete();[m
+[32m+[m[32m        }[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    /**[m
+[32m+[m[32m     * Finds the Comment model based on its primary key value.[m
+[32m+[m[32m     * If the model is not found, a 404 HTTP exception will be thrown.[m
+[32m+[m[32m     * @param integer $id[m
+[32m+[m[32m     * @return Comment the loaded model[m
+[32m+[m[32m     * @throws NotFoundHttpException if the model cannot be found[m
+[32m+[m[32m     */[m
+[32m+[m[32m    protected function findModel($id)[m
+[32m+[m[32m    {[m
+[32m+[m[32m        if (($model = Comment::findOne($id)) !== null) {[m
+[32m+[m[32m            return $model;[m
+[32m+[m[32m        } else {[m
+[32m+[m[32m            throw new NotFoundHttpException('The requested page does not exist.');[m
+[32m+[m[32m        }[m
+[32m+[m[32m    }[m
+[32m+[m[32m}[m
+[1mdiff --git a/backend/controllers/LookupController.php b/backend/controllers/LookupController.php[m
+[1mnew file mode 100644[m
+[1mindex 0000000..0106b51[m
+[1m--- /dev/null[m
+[1m+++ b/backend/controllers/LookupController.php[m
+[36m@@ -0,0 +1,224 @@[m
+[32m+[m[32m<?php[m
+[32m+[m
+[32m+[m[32mnamespace backend\controllers;[m
+[32m+[m
+[32m+[m[32muse Yii;[m
+[32m+[m[32muse common\models\Lookup;[m
+[32m+[m[32muse common\models\search\LookupSearch;[m
+[32m+[m[32muse yii\web\Controller;[m
+[32m+[m[32muse yii\web\NotFoundHttpException;[m
+[32m+[m[32muse yii\filters\VerbFilter;[m
+[32m+[m[32muse yii\grid\GridView;[m
+[32m+[m[32muse \yii\web\Response;[m
+[32m+[m
+[32m+[m[32m/**[m
+[32m+[m[32m * LookupController implements the CRUD actions for Lookup model.[m
+[32m+[m[32m */[m
+[32m+[m[32mclass LookupController extends Controller[m
+[32m+[m[32m{[m
+[32m+[m[32m    /**[m
+[32m+[m[32m     * @inheritdoc[m
+[32m+[m[32m     */[m
+[32m+[m[32m    public function behaviors()[m
+[32m+[m[32m    {[m
+[32m+[m[32m        return [[m
+[32m+[m[32m            'verbs' => [[m
+[32m+[m[32m                'class' => VerbFilter::className(),[m
+[32m+[m[32m                'actions' => [[m
+[32m+[m[32m                    'delete' => ['post'],[m
+[32m+[m[32m                    'bulk-delete' => ['post'],[m
+[32m+[m[32m                ],[m
+[32m+[m[32m            ],[m
+[32m+[m[32m        ];[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    /**[m
+[32m+[m[32m     * Lists all Lookup models.[m
+[32m+[m[32m     * @return mixed[m
+[32m+[m[32m     */[m
+[32m+[m[32m    public function actionIndex()[m
+[32m+[m[32m    {[m[41m    [m
+[32m+[m[32m        $searchModel = new LookupSearch();[m
+[32m+[m[32m        $dataProvider = $searchModel->search(Yii::$app->request->queryParams);[m
+[32m+[m
+[32m+[m[32m        return $this->render('index', [[m
+[32m+[m[32m            'searchModel' => $searchModel,[m
+[32m+[m[32m            'dataProvider' => $dataProvider,[m
+[32m+[m[32m        ]);[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m
+[32m+[m[32m    /**[m
+[32m+[m[32m     * Displays a single Lookup model.[m
+[32m+[m[32m     * @param integer $id[m
+[32m+[m[32m     * @return mixed[m
+[32m+[m[32m     */[m
+[32m+[m[32m    public function actionView($id)[m
+[32m+[m[32m    {[m[41m   [m
+[32m+[m[32m        $request = Yii::$app->request;[m
+[32m+[m[32m        if($request->isAjax){[m
+[32m+[m[32m            Yii::$app->response->format = Response::FORMAT_JSON;[m
+[32m+[m[32m            return [[m
+[32m+[m[32m                    'code'=>'200',[m
+[32m+[m[32m                    'message'=>'OK',[m
+[32m+[m[32m                    'data'=>$this->renderPartial('view', [[m
+[32m+[m[32m                        'model' => $this->findModel($id),[m
+[32m+[m[32m                    ])[m
+[32m+[m[32m                ];[m[41m    [m
+[32m+[m[32m        }else{[m
+[32m+[m[32m            return $this->render('view', [[m
+[32m+[m[32m                'model' => $this->findModel($id),[m
+[32m+[m[32m            ]);[m
+[32m+[m[32m        }[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    /**[m
+[32m+[m[32m     * Creates a new Lookup model.[m
+[32m+[m[32m     * For ajax request will return json object[m
+[32m+[m[32m     * and for non-ajax request if creation is successful, the browser will be redirected to the 'view' page.[m
+[32m+[m[32m     * @return mixed[m
+[32m+[m[32m     */[m
+[32m+[m[32m    public function actionCreate()[m
+[32m+[m[32m    {[m
+[32m+[m[32m        $request = Yii::$app->request;[m
+[32m+[m[32m        $model = new Lookup();[m[41m  [m
+[32m+[m
+[32m+[m[32m        if($request->isAjax){[m
+[32m+[m[32m            /*[m
+[32m+[m[32m            *   Process for ajax request[m
+[32m+[m[32m            */[m
+[32m+[m[32m            Yii::$app->response->format = Response::FORMAT_JSON;[m
+[32m+[m[32m            if($request->isGet){[m
+[32m+[m[32m                return [[m
+[32m+[m[32m                    'code'=>'200',[m
+[32m+[m[32m                    'message'=>'OK',[m
+[32m+[m[32m                    'data'=>$this->renderPartial('create', [[m
+[32m+[m[32m                        'model' => $model,[m
+[32m+[m[32m                    ]),[m
+[32m+[m[32m                ];[m[41m         [m
+[32m+[m[32m            }else if($model->load($request->post()) && $model->save()){[m
+[32m+[m[32m                return [[m
+[32m+[m[32m                    'code'=>'200',[m
+[32m+[m[32m                    'message'=>'Create Lookup success',[m
+[32m+[m[32m                ];[m
+[32m+[m[32m            }else{[m
+[32m+[m[32m                return [[m
+[32m+[m[32m                    'code'=>'400',[m
+[32m+[m[32m                    'message'=>'Validate error',[m
+[32m+[m[32m                    'data'=>$this->renderPartial('create', [[m
+[32m+[m[32m                        'model' => $model,[m
+[32m+[m[32m                    ]),[m
+[32m+[m[32m                ];[m[41m         [m
+[32m+[m[32m            }[m
+[32m+[m[32m        }else{[m
+[32m+[m[32m            /*[m
+[32m+[m[32m            *   Process for non-ajax request[m
+[32m+[m[32m            */[m
+[32m+[m[32m            if ($model->load($request->post()) && $model->save()) {[m
+[32m+[m[32m                return $this->redirect(['view', 'id' => $model->id]);[m
+[32m+[m[32m            } else {[m
+[32m+[m[32m                return $this->render('create', [[m
+[32m+[m[32m                    'model' => $model,[m
+[32m+[m[32m                ]);[m
+[32m+[m[32m            }[m
+[32m+[m[32m        }[m
+[32m+[m[41m       [m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    /**[m
+[32m+[m[32m     * Updates an existing Lookup model.[m
+[32m+[m[32m     * For ajax request will return json object[m
+[32m+[m[32m     * and for non-ajax request if update is successful, the browser will be redirected to the 'view' page.[m
+[32m+[m[32m     * @param integer $id[m
+[32m+[m[32m     * @return mixed[m
+[32m+[m[32m     */[m
+[32m+[m[32m    public function actionUpdate($id)[m
+[32m+[m[32m    {[m
+[32m+[m[32m        $request = Yii::$app->request;[m
+[32m+[m[32m        $model = $this->findModel($id);[m[41m       [m
+[32m+[m
+[32m+[m[32m        if($request->isAjax){[m
+[32m+[m[32m            /*[m
+[32m+[m[32m            *   Process for ajax request[m
+[32m+[m[32m            */[m
+[32m+[m[32m            Yii::$app->response->format = Response::FORMAT_JSON;[m
+[32m+[m[32m            if($request->isGet){[m
+[32m+[m[32m                return [[m
+[32m+[m[32m                    'code'=>'200',[m
+[32m+[m[32m                    'message'=>'OK',[m
+[32m+[m[32m                    'data'=>$this->renderPartial('update', [[m
+[32m+[m[32m                        'model' => $model,[m
+[32m+[m[32m                    ]),[m
+[32m+[m[32m                ];[m[41m         [m
+[32m+[m[32m            }else if($model->load($request->post()) && $model->save()){[m
+[32m+[m[32m                return [[m
+[32m+[m[32m                    'code'=>'200',[m
+[32m+[m[32m                    'message'=>'Create Lookup success',[m
+[32m+[m[32m                ];[m
+[32m+[m[32m            }else{[m
+[32m+[m[32m                return [[m
+[32m+[m[32m                    'code'=>'400',[m
+[32m+[m[32m                    'message'=>'Validate error',[m
+[32m+[m[32m                    'data'=>$this->renderPartial('update', [[m
+[32m+[m[32m                        'model' => $model,[m
+[32m+[m[32m                    ]),[m
+[32m+[m[32m                ];[m[41m         [m
+[32m+[m[32m            }[m
+[32m+[m[32m        }else{[m
+[32m+[m[32m            /*[m
+[32m+[m[32m            *   Process for non-ajax request[m
+[32m+[m[32m            */[m
+[32m+[m[32m            if ($model->load($request->post()) && $model->save()) {[m
+[32m+[m[32m                return $this->redirect(['view', 'id' => $model->id]);[m
+[32m+[m[32m            } else {[m
+[32m+[m[32m                return $this->render('update', [[m
+[32m+[m[32m                    'model' => $model,[m
+[32m+[m[32m                ]);[m
+[32m+[m[32m            }[m
+[32m+[m[32m        }[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    /**[m
+[32m+[m[32m     * Delete an existing Lookup model.[m
+[32m+[m[32m     * For ajax request will return json object[m
+[32m+[m[32m     * and for non-ajax request if deletion is successful, the browser will be redirected to the 'index' page.[m
+[32m+[m[32m     * @param integer $id[m
+[32m+[m[32m     * @return mixed[m
+[32m+[m[32m     */[m
+[32m+[m[32m    public function actionDelete($id)[m
+[32m+[m[32m    {[m
+[32m+[m[32m        $this->findModel($id)->delete();[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m     /**[m
+[32m+[m[32m     * Delete multiple existing Lookup model.[m
+[32m+[m[32m     * For ajax request will return json object[m
+[32m+[m[32m     * and for non-ajax request if deletion is successful, the browser will be redirected to the 'index' page.[m
+[32m+[m[32m     * @param integer $id[m
+[32m+[m[32m     * @return mixed[m
+[32m+[m[32m     */[m
+[32m+[m[32m    public function actionBulkDelete()[m
+[32m+[m[32m    {[m[41m        [m
+[32m+[m[32m        $request = Yii::$app->request;[m
+[32m+[m[32m        $pks = $request->post('pks'); // Array or selected records primary keys[m
+[32m+[m[32m        foreach (Lookup::findAll(json_decode($pks)) as $model) {[m
+[32m+[m[32m            $model->delete();[m
+[32m+[m[32m        }[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    /**[m
+[32m+[m[32m     * Finds the Lookup model based on its primary key value.[m
+[32m+[m[32m     * If the model is not found, a 404 HTTP exception will be thrown.[m
+[32m+[m[32m     * @param integer $id[m
+[32m+[m[32m     * @return Lookup the loaded model[m
+[32m+[m[32m     * @throws NotFoundHttpException if the model cannot be found[m
+[32m+[m[32m     */[m
+[32m+[m[32m    protected function findModel($id)[m
+[32m+[m[32m    {[m
+[32m+[m[32m        if (($model = Lookup::findOne($id)) !== null) {[m
+[32m+[m[32m            return $model;[m
+[32m+[m[32m        } else {[m
+[32m+[m[32m            throw new NotFoundHttpException('The requested page does not exist.');[m
+[32m+[m[32m        }[m
+[32m+[m[32m    }[m
+[32m+[m[32m}[m
+[1mdiff --git a/backend/controllers/PostController.php b/backend/controllers/PostController.php[m
+[1mnew file mode 100644[m
+[1mindex 0000000..6b730a7[m
+[1m--- /dev/null[m
+[1m+++ b/backend/controllers/PostController.php[m
+[36m@@ -0,0 +1,224 @@[m
+[32m+[m[32m<?php[m
+[32m+[m
+[32m+[m[32mnamespace backend\controllers;[m
+[32m+[m
+[32m+[m[32muse Yii;[m
+[32m+[m[32muse common\models\Post;[m
+[32m+[m[32muse common\models\search\PostSearch;[m
+[32m+[m[32muse yii\web\Controller;[m
+[32m+[m[32muse yii\web\NotFoundHttpException;[m
+[32m+[m[32muse yii\filters\VerbFilter;[m
+[32m+[m[32muse yii\grid\GridView;[m
+[32m+[m[32muse \yii\web\Response;[m
+[32m+[m
+[32m+[m[32m/**[m
+[32m+[m[32m * PostController implements the CRUD actions for Post model.[m
+[32m+[m[32m */[m
+[32m+[m[32mclass PostController extends Controller[m
+[32m+[m[32m{[m
+[32m+[m[32m    /**[m
+[32m+[m[32m     * @inheritdoc[m
+[32m+[m[32m     */[m
+[32m+[m[32m    public function behaviors()[m
+[32m+[m[32m    {[m
+[32m+[m[32m        return [[m
+[32m+[m[32m            'verbs' => [[m
+[32m+[m[32m                'class' => VerbFilter::className(),[m
+[32m+[m[32m                'actions' => [[m
+[32m+[m[32m                    'delete' => ['post'],[m
+[32m+[m[32m                    'bulk-delete' => ['post'],[m
+[32m+[m[32m                ],[m
+[32m+[m[32m            ],[m
+[32m+[m[32m        ];[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    /**[m
+[32m+[m[32m     * Lists all Post models.[m
+[32m+[m[32m     * @return mixed[m
+[32m+[m[32m     */[m
+[32m+[m[32m    public function actionIndex()[m
+[32m+[m[32m    {[m[41m    [m
+[32m+[m[32m        $searchModel = new PostSearch();[m
+[32m+[m[32m        $dataProvider = $searchModel->search(Yii::$app->request->queryParams);[m
+[32m+[m
+[32m+[m[32m        return $this->render('index', [[m
+[32m+[m[32m            'searchModel' => $searchModel,[m
+[32m+[m[32m            'dataProvider' => $dataProvider,[m
+[32m+[m[32m        ]);[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m
+[32m+[m[32m    /**[m
+[32m+[m[32m     * Displays a single Post model.[m
+[32m+[m[32m     * @param integer $id[m
+[32m+[m[32m     * @return mixed[m
+[32m+[m[32m     */[m
+[32m+[m[32m    public function actionView($id)[m
+[32m+[m[32m    {[m[41m   [m
+[32m+[m[32m        $request = Yii::$app->request;[m
+[32m+[m[32m        if($request->isAjax){[m
+[32m+[m[32m            Yii::$app->response->format = Response::FORMAT_JSON;[m
+[32m+[m[32m            return [[m
+[32m+[m[32m                    'code'=>'200',[m
+[32m+[m[32m                    'message'=>'OK',[m
+[32m+[m[32m                    'data'=>$this->renderPartial('view', [[m
+[32m+[m[32m                        'model' => $this->findModel($id),[m
+[32m+[m[32m                    ])[m
+[32m+[m[32m                ];[m[41m    [m
+[32m+[m[32m        }else{[m
+[32m+[m[32m            return $this->render('view', [[m
+[32m+[m[32m                'model' => $this->findModel($id),[m
+[32m+[m[32m            ]);[m
+[32m+[m[32m        }[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    /**[m
+[32m+[m[32m     * Creates a new Post model.[m
+[32m+[m[32m     * For ajax request will return json object[m
+[32m+[m[32m     * and for non-ajax request if creation is successful, the browser will be redirected to the 'view' page.[m
+[32m+[m[32m     * @return mixed[m
+[32m+[m[32m     */[m
+[32m+[m[32m    public function actionCreate()[m
+[32m+[m[32m    {[m
+[32m+[m[32m        $request = Yii::$app->request;[m
+[32m+[m[32m        $model = new Post();[m[41m  [m
+[32m+[m
+[32m+[m[32m        if($request->isAjax){[m
+[32m+[m[32m            /*[m
+[32m+[m[32m            *   Process for ajax request[m
+[32m+[m[32m            */[m
+[32m+[m[32m            Yii::$app->response->format = Response::FORMAT_JSON;[m
+[32m+[m[32m            if($request->isGet){[m
+[32m+[m[32m                return [[m
+[32m+[m[32m                    'code'=>'200',[m
+[32m+[m[32m                    'message'=>'OK',[m
+[32m+[m[32m                    'data'=>$this->renderPartial('create', [[m
+[32m+[m[32m                        'model' => $model,[m
+[32m+[m[32m                    ]),[m
+[32m+[m[32m                ];[m[41m         [m
+[32m+[m[32m            }else if($model->load($request->post()) && $model->save()){[m
+[32m+[m[32m                return [[m
+[32m+[m[32m                    'code'=>'200',[m
+[32m+[m[32m                    'message'=>'Create Post success',[m
+[32m+[m[32m                ];[m
+[32m+[m[32m            }else{[m
+[32m+[m[32m                return [[m
+[32m+[m[32m                    'code'=>'400',[m
+[32m+[m[32m                    'message'=>'Validate error',[m
+[32m+[m[32m                    'data'=>$this->renderPartial('create', [[m
+[32m+[m[32m                        'model' => $model,[m
+[32m+[m[32m                    ]),[m
+[32m+[m[32m                ];[m[41m         [m
+[32m+[m[32m            }[m
+[32m+[m[32m        }else{[m
+[32m+[m[32m            /*[m
+[32m+[m[32m            *   Process for non-ajax request[m
+[32m+[m[32m            */[m
+[32m+[m[32m            if ($model->load($request->post()) && $model->save()) {[m
+[32m+[m[32m                return $this->redirect(['view', 'id' => $model->id]);[m
+[32m+[m[32m            } else {[m
+[32m+[m[32m                return $this->render('create', [[m
+[32m+[m[32m                    'model' => $model,[m
+[32m+[m[32m                ]);[m
+[32m+[m[32m            }[m
+[32m+[m[32m        }[m
+[32m+[m[41m       [m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    /**[m
+[32m+[m[32m     * Updates an existing Post model.[m
+[32m+[m[32m     * For ajax request will return json object[m
+[32m+[m[32m     * and for non-ajax request if update is successful, the browser will be redirected to the 'view' page.[m
+[32m+[m[32m     * @param integer $id[m
+[32m+[m[32m     * @return mixed[m
+[32m+[m[32m     */[m
+[32m+[m[32m    public function actionUpdate($id)[m
+[32m+[m[32m    {[m
+[32m+[m[32m        $request = Yii::$app->request;[m
+[32m+[m[32m        $model = $this->findModel($id);[m[41m       [m
+[32m+[m
+[32m+[m[32m        if($request->isAjax){[m
+[32m+[m[32m            /*[m
+[32m+[m[32m            *   Process for ajax request[m
+[32m+[m[32m            */[m
+[32m+[m[32m            Yii::$app->response->format = Response::FORMAT_JSON;[m
+[32m+[m[32m            if($request->isGet){[m
+[32m+[m[32m                return [[m
+[32m+[m[32m                    'code'=>'200',[m
+[32m+[m[32m                    'message'=>'OK',[m
+[32m+[m[32m                    'data'=>$this->renderPartial('update', [[m
+[32m+[m[32m                        'model' => $model,[m
+[32m+[m[32m                    ]),[m
+[32m+[m[32m                ];[m[41m         [m
+[32m+[m[32m            }else if($model->load($request->post()) && $model->save()){[m
+[32m+[m[32m                return [[m
+[32m+[m[32m                    'code'=>'200',[m
+[32m+[m[32m                    'message'=>'Create Post success',[m
+[32m+[m[32m                ];[m
+[32m+[m[32m            }else{[m
+[32m+[m[32m                return [[m
+[32m+[m[32m                    'code'=>'400',[m
+[32m+[m[32m                    'message'=>'Validate error',[m
+[32m+[m[32m                    'data'=>$this->renderPartial('update', [[m
+[32m+[m[32m                        'model' => $model,[m
+[32m+[m[32m                    ]),[m
+[32m+[m[32m                ];[m[41m         [m
+[32m+[m[32m            }[m
+[32m+[m[32m        }else{[m
+[32m+[m[32m            /*[m
+[32m+[m[32m            *   Process for non-ajax request[m
+[32m+[m[32m            */[m
+[32m+[m[32m            if ($model->load($request->post()) && $model->save()) {[m
+[32m+[m[32m                return $this->redirect(['view', 'id' => $model->id]);[m
+[32m+[m[32m            } else {[m
+[32m+[m[32m                return $this->render('update', [[m
+[32m+[m[32m                    'model' => $model,[m
+[32m+[m[32m                ]);[m
+[32m+[m[32m            }[m
+[32m+[m[32m        }[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    /**[m
+[32m+[m[32m     * Delete an existing Post model.[m
+[32m+[m[32m     * For ajax request will return json object[m
+[32m+[m[32m     * and for non-ajax request if deletion is successful, the browser will be redirected to the 'index' page.[m
+[32m+[m[32m     * @param integer $id[m
+[32m+[m[32m     * @return mixed[m
+[32m+[m[32m     */[m
+[32m+[m[32m    public function actionDelete($id)[m
+[32m+[m[32m    {[m
+[32m+[m[32m        $this->findModel($id)->delete();[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m     /**[m
+[32m+[m[32m     * Delete multiple existing Post model.[m
+[32m+[m[32m     * For ajax request will return json object[m
+[32m+[m[32m     * and for non-ajax request if deletion is successful, the browser will be redirected to the 'index' page.[m
+[32m+[m[32m     * @param integer $id[m
+[32m+[m[32m     * @return mixed[m
+[32m+[m[32m     */[m
+[32m+[m[32m    public function actionBulkDelete()[m
+[32m+[m[32m    {[m[41m        [m
+[32m+[m[32m        $request = Yii::$app->request;[m
+[32m+[m[32m        $pks = $request->post('pks'); // Array or selected records primary keys[m
+[32m+[m[32m        foreach (Post::findAll(json_decode($pks)) as $model) {[m
+[32m+[m[32m            $model->delete();[m
+[32m+[m[32m        }[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    /**[m
+[32m+[m[32m     * Finds the Post model based on its primary key value.[m
+[32m+[m[32m     * If the model is not found, a 404 HTTP exception will be thrown.[m
+[32m+[m[32m     * @param integer $id[m
+[32m+[m[32m     * @return Post the loaded model[m
+[32m+[m[32m     * @throws NotFoundHttpException if the model cannot be found[m
+[32m+[m[32m     */[m
+[32m+[m[32m    protected function findModel($id)[m
+[32m+[m[32m    {[m
+[32m+[m[32m        if (($model = Post::findOne($id)) !== null) {[m
+[32m+[m[32m            return $model;[m
+[32m+[m[32m        } else {[m
+[32m+[m[32m            throw new NotFoundHttpException('The requested page does not exist.');[m
+[32m+[m[32m        }[m
+[32m+[m[32m    }[m
+[32m+[m[32m}[m
+[1mdiff --git a/backend/controllers/RoleController.php b/backend/controllers/RoleController.php[m
+[1mnew file mode 100644[m
+[1mindex 0000000..ae43ea4[m
+[1m--- /dev/null[m
+[1m+++ b/backend/controllers/RoleController.php[m
+[36m@@ -0,0 +1,224 @@[m
+[32m+[m[32m<?php[m
+[32m+[m
+[32m+[m[32mnamespace backend\controllers;[m
+[32m+[m
+[32m+[m[32muse Yii;[m
+[32m+[m[32muse backend\models\Role;[m
+[32m+[m[32muse backend\models\search\RoleSearch;[m
+[32m+[m[32muse yii\web\Controller;[m
+[32m+[m[32muse yii\web\NotFoundHttpException;[m
+[32m+[m[32muse yii\filters\VerbFilter;[m
+[32m+[m[32muse yii\grid\GridView;[m
+[32m+[m[32muse \yii\web\Response;[m
+[32m+[m
+[32m+[m[32m/**[m
+[32m+[m[32m * RoleController implements the CRUD actions for Role model.[m
+[32m+[m[32m */[m
+[32m+[m[32mclass RoleController extends Controller[m
+[32m+[m[32m{[m
+[32m+[m[32m    /**[m
+[32m+[m[32m     * @inheritdoc[m
+[32m+[m[32m     */[m
+[32m+[m[32m    public function behaviors()[m
+[32m+[m[32m    {[m
+[32m+[m[32m        return [[m
+[32m+[m[32m            'verbs' => [[m
+[32m+[m[32m                'class' => VerbFilter::className(),[m
+[32m+[m[32m                'actions' => [[m
+[32m+[m[32m                    'delete' => ['post'],[m
+[32m+[m[32m                    'bulk-delete' => ['post'],[m
+[32m+[m[32m                ],[m
+[32m+[m[32m            ],[m
+[32m+[m[32m        ];[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    /**[m
+[32m+[m[32m     * Lists all Role models.[m
+[32m+[m[32m     * @return mixed[m
+[32m+[m[32m     */[m
+[32m+[m[32m    public function actionIndex()[m
+[32m+[m[32m    {[m[41m    [m
+[32m+[m[32m        $searchModel = new RoleSearch();[m
+[32m+[m[32m        $dataProvider = $searchModel->search(Yii::$app->request->queryParams);[m
+[32m+[m
+[32m+[m[32m        return $this->render('index', [[m
+[32m+[m[32m            'searchModel' => $searchModel,[m
+[32m+[m[32m            'dataProvider' => $dataProvider,[m
+[32m+[m[32m        ]);[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m
+[32m+[m[32m    /**[m
+[32m+[m[32m     * Displays a single Role model.[m
+[32m+[m[32m     * @param integer $id[m
+[32m+[m[32m     * @return mixed[m
+[32m+[m[32m     */[m
+[32m+[m[32m    public function actionView($id)[m
+[32m+[m[32m    {[m[41m   [m
+[32m+[m[32m        $request = Yii::$app->request;[m
+[32m+[m[32m        if($request->isAjax){[m
+[32m+[m[32m            Yii::$app->response->format = Response::FORMAT_JSON;[m
+[32m+[m[32m            return [[m
+[32m+[m[32m                    'code'=>'200',[m
+[32m+[m[32m                    'message'=>'OK',[m
+[32m+[m[32m                    'data'=>$this->renderPartial('view', [[m
+[32m+[m[32m                        'model' => $this->findModel($id),[m
+[32m+[m[32m                    ])[m
+[32m+[m[32m                ];[m[41m    [m
+[32m+[m[32m        }else{[m
+[32m+[m[32m            return $this->render('view', [[m
+[32m+[m[32m                'model' => $this->findModel($id),[m
+[32m+[m[32m            ]);[m
+[32m+[m[32m        }[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    /**[m
+[32m+[m[32m     * Creates a new Role model.[m
+[32m+[m[32m     * For ajax request will return json object[m
+[32m+[m[32m     * and for non-ajax request if creation is successful, the browser will be redirected to the 'view' page.[m
+[32m+[m[32m     * @return mixed[m
+[32m+[m[32m     */[m
+[32m+[m[32m    public function actionCreate()[m
+[32m+[m[32m    {[m
+[32m+[m[32m        $request = Yii::$app->request;[m
+[32m+[m[32m        $model = new Role();[m[41m  [m
+[32m+[m
+[32m+[m[32m        if($request->isAjax){[m
+[32m+[m[32m            /*[m
+[32m+[m[32m            *   Process for ajax request[m
+[32m+[m[32m            */[m
+[32m+[m[32m            Yii::$app->response->format = Response::FORMAT_JSON;[m
+[32m+[m[32m            if($request->isGet){[m
+[32m+[m[32m                return [[m
+[32m+[m[32m                    'code'=>'200',[m
+[32m+[m[32m                    'message'=>'OK',[m
+[32m+[m[32m                    'data'=>$this->renderPartial('create', [[m
+[32m+[m[32m                        'model' => $model,[m
+[32m+[m[32m                    ]),[m
+[32m+[m[32m                ];[m[41m         [m
+[32m+[m[32m            }else if($model->load($request->post()) && $model->save()){[m
+[32m+[m[32m                return [[m
+[32m+[m[32m                    'code'=>'200',[m
+[32m+[m[32m                    'message'=>'Create Role success',[m
+[32m+[m[32m                ];[m
+[32m+[m[32m            }else{[m
+[32m+[m[32m                return [[m
+[32m+[m[32m                    'code'=>'400',[m
+[32m+[m[32m                    'message'=>'Validate error',[m
+[32m+[m[32m                    'data'=>$this->renderPartial('create', [[m
+[32m+[m[32m                        'model' => $model,[m
+[32m+[m[32m                    ]),[m
+[32m+[m[32m                ];[m[41m         [m
+[32m+[m[32m            }[m
+[32m+[m[32m        }else{[m
+[32m+[m[32m            /*[m
+[32m+[m[32m            *   Process for non-ajax request[m
+[32m+[m[32m            */[m
+[32m+[m[32m            if ($model->load($request->post()) && $model->save()) {[m
+[32m+[m[32m                return $this->redirect(['view', 'id' => $model->id]);[m
+[32m+[m[32m            } else {[m
+[32m+[m[32m                return $this->render('create', [[m
+[32m+[m[32m                    'model' => $model,[m
+[32m+[m[32m                ]);[m
+[32m+[m[32m            }[m
+[32m+[m[32m        }[m
+[32m+[m[41m       [m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    /**[m
+[32m+[m[32m     * Updates an existing Role model.[m
+[32m+[m[32m     * For ajax request will return json object[m
+[32m+[m[32m     * and for non-ajax request if update is successful, the browser will be redirected to the 'view' page.[m
+[32m+[m[32m     * @param integer $id[m
+[32m+[m[32m     * @return mixed[m
+[32m+[m[32m     */[m
+[32m+[m[32m    public function actionUpdate($id)[m
+[32m+[m[32m    {[m
+[32m+[m[32m        $request = Yii::$app->request;[m
+[32m+[m[32m        $model = $this->findModel($id);[m[41m       [m
+[32m+[m
+[32m+[m[32m        if($request->isAjax){[m
+[32m+[m[32m            /*[m
+[32m+[m[32m            *   Process for ajax request[m
+[32m+[m[32m            */[m
+[32m+[m[32m            Yii::$app->response->format = Response::FORMAT_JSON;[m
+[32m+[m[32m            if($request->isGet){[m
+[32m+[m[32m                return [[m
+[32m+[m[32m                    'code'=>'200',[m
+[32m+[m[32m                    'message'=>'OK',[m
+[32m+[m[32m                    'data'=>$this->renderPartial('update', [[m
+[32m+[m[32m                        'model' => $model,[m
+[32m+[m[32m                    ]),[m
+[32m+[m[32m                ];[m[41m         [m
+[32m+[m[32m            }else if($model->load($request->post()) && $model->save()){[m
+[32m+[m[32m                return [[m
+[32m+[m[32m                    'code'=>'200',[m
+[32m+[m[32m                    'message'=>'Create Role success',[m
+[32m+[m[32m                ];[m
+[32m+[m[32m            }else{[m
+[32m+[m[32m                return [[m
+[32m+[m[32m                    'code'=>'400',[m
+[32m+[m[32m                    'message'=>'Validate error',[m
+[32m+[m[32m                    'data'=>$this->renderPartial('update', [[m
+[32m+[m[32m                        'model' => $model,[m
+[32m+[m[32m                    ]),[m
+[32m+[m[32m                ];[m[41m         [m
+[32m+[m[32m            }[m
+[32m+[m[32m        }else{[m
+[32m+[m[32m            /*[m
+[32m+[m[32m            *   Process for non-ajax request[m
+[32m+[m[32m            */[m
+[32m+[m[32m            if ($model->load($request->post()) && $model->save()) {[m
+[32m+[m[32m                return $this->redirect(['view', 'id' => $model->id]);[m
+[32m+[m[32m            } else {[m
+[32m+[m[32m                return $this->render('update', [[m
+[32m+[m[32m                    'model' => $model,[m
+[32m+[m[32m                ]);[m
+[32m+[m[32m            }[m
+[32m+[m[32m        }[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    /**[m
+[32m+[m[32m     * Delete an existing Role model.[m
+[32m+[m[32m     * For ajax request will return json object[m
+[32m+[m[32m     * and for non-ajax request if deletion is successful, the browser will be redirected to the 'index' page.[m
+[32m+[m[32m     * @param integer $id[m
+[32m+[m[32m     * @return mixed[m
+[32m+[m[32m     */[m
+[32m+[m[32m    public function actionDelete($id)[m
+[32m+[m[32m    {[m
+[32m+[m[32m        $this->findModel($id)->delete();[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m     /**[m
+[32m+[m[32m     * Delete multiple existing Role model.[m
+[32m+[m[32m     * For ajax request will return json object[m
+[32m+[m[32m     * and for non-ajax request if deletion is successful, the browser will be redirected to the 'index' page.[m
+[32m+[m[32m     * @param integer $id[m
+[32m+[m[32m     * @return mixed[m
+[32m+[m[32m     */[m
+[32m+[m[32m    public function actionBulkDelete()[m
+[32m+[m[32m    {[m[41m        [m
+[32m+[m[32m        $request = Yii::$app->request;[m
+[32m+[m[32m        $pks = $request->post('pks'); // Array or selected records primary keys[m
+[32m+[m[32m        foreach (Role::findAll(json_decode($pks)) as $model) {[m
+[32m+[m[32m            $model->delete();[m
+[32m+[m[32m        }[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    /**[m
+[32m+[m[32m     * Finds the Role model based on its primary key value.[m
+[32m+[m[32m     * If the model is not found, a 404 HTTP exception will be thrown.[m
+[32m+[m[32m     * @param integer $id[m
+[32m+[m[32m     * @return Role the loaded model[m
+[32m+[m[32m     * @throws NotFoundHttpException if the model cannot be found[m
+[32m+[m[32m     */[m
+[32m+[m[32m    protected function findModel($id)[m
+[32m+[m[32m    {[m
+[32m+[m[32m        if (($model = Role::findOne($id)) !== null) {[m
+[32m+[m[32m            return $model;[m
+[32m+[m[32m        } else {[m
+[32m+[m[32m            throw new NotFoundHttpException('The requested page does not exist.');[m
+[32m+[m[32m        }[m
+[32m+[m[32m    }[m
+[32m+[m[32m}[m
+[1mdiff --git a/backend/controllers/StatusController.php b/backend/controllers/StatusController.php[m
+[1mnew file mode 100644[m
+[1mindex 0000000..4c5a225[m
+[1m--- /dev/null[m
+[1m+++ b/backend/controllers/StatusController.php[m
+[36m@@ -0,0 +1,224 @@[m
+[32m+[m[32m<?php[m
+[32m+[m
+[32m+[m[32mnamespace backend\controllers;[m
+[32m+[m
+[32m+[m[32muse Yii;[m
+[32m+[m[32muse backend\models\Status;[m
+[32m+[m[32muse backend\models\search\StatusSearch;[m
+[32m+[m[32muse yii\web\Controller;[m
+[32m+[m[32muse yii\web\NotFoundHttpException;[m
+[32m+[m[32muse yii\filters\VerbFilter;[m
+[32m+[m[32muse yii\grid\GridView;[m
+[32m+[m[32muse \yii\web\Response;[m
+[32m+[m
+[32m+[m[32m/**[m
+[32m+[m[32m * StatusController implements the CRUD actions for Status model.[m
+[32m+[m[32m */[m
+[32m+[m[32mclass StatusController extends Controller[m
+[32m+[m[32m{[m
+[32m+[m[32m    /**[m
+[32m+[m[32m     * @inheritdoc[m
+[32m+[m[32m     */[m
+[32m+[m[32m    public function behaviors()[m
+[32m+[m[32m    {[m
+[32m+[m[32m        return [[m
+[32m+[m[32m            'verbs' => [[m
+[32m+[m[32m                'class' => VerbFilter::className(),[m
+[32m+[m[32m                'actions' => [[m
+[32m+[m[32m                    'delete' => ['post'],[m
+[32m+[m[32m                    'bulk-delete' => ['post'],[m
+[32m+[m[32m                ],[m
+[32m+[m[32m            ],[m
+[32m+[m[32m        ];[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    /**[m
+[32m+[m[32m     * Lists all Status models.[m
+[32m+[m[32m     * @return mixed[m
+[32m+[m[32m     */[m
+[32m+[m[32m    public function actionIndex()[m
+[32m+[m[32m    {[m[41m    [m
+[32m+[m[32m        $searchModel = new StatusSearch();[m
+[32m+[m[32m        $dataProvider = $searchModel->search(Yii::$app->request->queryParams);[m
+[32m+[m
+[32m+[m[32m        return $this->render('index', [[m
+[32m+[m[32m            'searchModel' => $searchModel,[m
+[32m+[m[32m            'dataProvider' => $dataProvider,[m
+[32m+[m[32m        ]);[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m
+[32m+[m[32m    /**[m
+[32m+[m[32m     * Displays a single Status model.[m
+[32m+[m[32m     * @param integer $id[m
+[32m+[m[32m     * @return mixed[m
+[32m+[m[32m     */[m
+[32m+[m[32m    public function actionView($id)[m
+[32m+[m[32m    {[m[41m   [m
+[32m+[m[32m        $request = Yii::$app->request;[m
+[32m+[m[32m        if($request->isAjax){[m
+[32m+[m[32m            Yii::$app->response->format = Response::FORMAT_JSON;[m
+[32m+[m[32m            return [[m
+[32m+[m[32m                    'code'=>'200',[m
+[32m+[m[32m                    'message'=>'OK',[m
+[32m+[m[32m                    'data'=>$this->renderPartial('view', [[m
+[32m+[m[32m                        'model' => $this->findModel($id),[m
+[32m+[m[32m                    ])[m
+[32m+[m[32m                ];[m[41m    [m
+[32m+[m[32m        }else{[m
+[32m+[m[32m            return $this->render('view', [[m
+[32m+[m[32m                'model' => $this->findModel($id),[m
+[32m+[m[32m            ]);[m
+[32m+[m[32m        }[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    /**[m
+[32m+[m[32m     * Creates a new Status model.[m
+[32m+[m[32m     * For ajax request will return json object[m
+[32m+[m[32m     * and for non-ajax request if creation is successful, the browser will be redirected to the 'view' page.[m
+[32m+[m[32m     * @return mixed[m
+[32m+[m[32m     */[m
+[32m+[m[32m    public function actionCreate()[m
+[32m+[m[32m    {[m
+[32m+[m[32m        $request = Yii::$app->request;[m
+[32m+[m[32m        $model = new Status();[m[41m  [m
+[32m+[m
+[32m+[m[32m        if($request->isAjax){[m
+[32m+[m[32m            /*[m
+[32m+[m[32m            *   Process for ajax request[m
+[32m+[m[32m            */[m
+[32m+[m[32m            Yii::$app->response->format = Response::FORMAT_JSON;[m
+[32m+[m[32m            if($request->isGet){[m
+[32m+[m[32m                return [[m
+[32m+[m[32m                    'code'=>'200',[m
+[32m+[m[32m                    'message'=>'OK',[m
+[32m+[m[32m                    'data'=>$this->renderPartial('create', [[m
+[32m+[m[32m                        'model' => $model,[m
+[32m+[m[32m                    ]),[m
+[32m+[m[32m                ];[m[41m         [m
+[32m+[m[32m            }else if($model->load($request->post()) && $model->save()){[m
+[32m+[m[32m                return [[m
+[32m+[m[32m                    'code'=>'200',[m
+[32m+[m[32m                    'message'=>'Create Status success',[m
+[32m+[m[32m                ];[m
+[32m+[m[32m            }else{[m
+[32m+[m[32m                return [[m
+[32m+[m[32m                    'code'=>'400',[m
+[32m+[m[32m                    'message'=>'Validate error',[m
+[32m+[m[32m                    'data'=>$this->renderPartial('create', [[m
+[32m+[m[32m                        'model' => $model,[m
+[32m+[m[32m                    ]),[m
+[32m+[m[32m                ];[m[41m         [m
+[32m+[m[32m            }[m
+[32m+[m[32m        }else{[m
+[32m+[m[32m            /*[m
+[32m+[m[32m            *   Process for non-ajax request[m
+[32m+[m[32m            */[m
+[32m+[m[32m            if ($model->load($request->post()) && $model->save()) {[m
+[32m+[m[32m                return $this->redirect(['view', 'id' => $model->id]);[m
+[32m+[m[32m            } else {[m
+[32m+[m[32m                return $this->render('create', [[m
+[32m+[m[32m                    'model' => $model,[m
+[32m+[m[32m                ]);[m
+[32m+[m[32m            }[m
+[32m+[m[32m        }[m
+[32m+[m[41m       [m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    /**[m
+[32m+[m[32m     * Updates an existing Status model.[m
+[32m+[m[32m     * For ajax request will return json object[m
+[32m+[m[32m     * and for non-ajax request if update is successful, the browser will be redirected to the 'view' page.[m
+[32m+[m[32m     * @param integer $id[m
+[32m+[m[32m     * @return mixed[m
+[32m+[m[32m     */[m
+[32m+[m[32m    public function actionUpdate($id)[m
+[32m+[m[32m    {[m
+[32m+[m[32m        $request = Yii::$app->request;[m
+[32m+[m[32m        $model = $this->findModel($id);[m[41m       [m
+[32m+[m
+[32m+[m[32m        if($request->isAjax){[m
+[32m+[m[32m            /*[m
+[32m+[m[32m            *   Process for ajax request[m
+[32m+[m[32m            */[m
+[32m+[m[32m            Yii::$app->response->format = Response::FORMAT_JSON;[m
+[32m+[m[32m            if($request->isGet){[m
+[32m+[m[32m                return [[m
+[32m+[m[32m                    'code'=>'200',[m
+[32m+[m[32m                    'message'=>'OK',[m
+[32m+[m[32m                    'data'=>$this->renderPartial('update', [[m
+[32m+[m[32m                        'model' => $model,[m
+[32m+[m[32m                    ]),[m
+[32m+[m[32m                ];[m[41m         [m
+[32m+[m[32m            }else if($model->load($request->post()) && $model->save()){[m
+[32m+[m[32m                return [[m
+[32m+[m[32m                    'code'=>'200',[m
+[32m+[m[32m                    'message'=>'Create Status success',[m
+[32m+[m[32m                ];[m
+[32m+[m[32m            }else{[m
+[32m+[m[32m                return [[m
+[32m+[m[32m                    'code'=>'400',[m
+[32m+[m[32m                    'message'=>'Validate error',[m
+[32m+[m[32m                    'data'=>$this->renderPartial('update', [[m
+[32m+[m[32m                        'model' => $model,[m
+[32m+[m[32m                    ]),[m
+[32m+[m[32m                ];[m[41m         [m
+[32m+[m[32m            }[m
+[32m+[m[32m        }else{[m
+[32m+[m[32m            /*[m
+[32m+[m[32m            *   Process for non-ajax request[m
+[32m+[m[32m            */[m
+[32m+[m[32m            if ($model->load($request->post()) && $model->save()) {[m
+[32m+[m[32m                return $this->redirect(['view', 'id' => $model->id]);[m
+[32m+[m[32m            } else {[m
+[32m+[m[32m                return $this->render('update', [[m
+[32m+[m[32m                    'model' => $model,[m
+[32m+[m[32m                ]);[m
+[32m+[m[32m            }[m
+[32m+[m[32m        }[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    /**[m
+[32m+[m[32m     * Delete an existing Status model.[m
+[32m+[m[32m     * For ajax request will return json object[m
+[32m+[m[32m     * and for non-ajax request if deletion is successful, the browser will be redirected to the 'index' page.[m
+[32m+[m[32m     * @param integer $id[m
+[32m+[m[32m     * @return mixed[m
+[32m+[m[32m     */[m
+[32m+[m[32m    public function actionDelete($id)[m
+[32m+[m[32m    {[m
+[32m+[m[32m        $this->findModel($id)->delete();[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m     /**[m
+[32m+[m[32m     * Delete multiple existing Status model.[m
+[32m+[m[32m     * For ajax request will return json object[m
+[32m+[m[32m     * and for non-ajax request if deletion is successful, the browser will be redirected to the 'index' page.[m
+[32m+[m[32m     * @param integer $id[m
+[32m+[m[32m     * @return mixed[m
+[32m+[m[32m     */[m
+[32m+[m[32m    public function actionBulkDelete()[m
+[32m+[m[32m    {[m[41m        [m
+[32m+[m[32m        $request = Yii::$app->request;[m
+[32m+[m[32m        $pks = $request->post('pks'); // Array or selected records primary keys[m
+[32m+[m[32m        foreach (Status::findAll(json_decode($pks)) as $model) {[m
+[32m+[m[32m            $model->delete();[m
+[32m+[m[32m        }[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    /**[m
+[32m+[m[32m     * Finds the Status model based on its primary key value.[m
+[32m+[m[32m     * If the model is not found, a 404 HTTP exception will be thrown.[m
+[32m+[m[32m     * @param integer $id[m
+[32m+[m[32m     * @return Status the loaded model[m
+[32m+[m[32m     * @throws NotFoundHttpException if the model cannot be found[m
+[32m+[m[32m     */[m
+[32m+[m[32m    protected function findModel($id)[m
+[32m+[m[32m    {[m
+[32m+[m[32m        if (($model = Status::findOne($id)) !== null) {[m
+[32m+[m[32m            return $model;[m
+[32m+[m[32m        } else {[m
+[32m+[m[32m            throw new NotFoundHttpException('The requested page does not exist.');[m
+[32m+[m[32m        }[m
+[32m+[m[32m    }[m
+[32m+[m[32m}[m
+[1mdiff --git a/backend/controllers/TagController.php b/backend/controllers/TagController.php[m
+[1mnew file mode 100644[m
+[1mindex 0000000..6f2ede2[m
+[1m--- /dev/null[m
+[1m+++ b/backend/controllers/TagController.php[m
+[36m@@ -0,0 +1,224 @@[m
+[32m+[m[32m<?php[m
+[32m+[m
+[32m+[m[32mnamespace backend\controllers;[m
+[32m+[m
+[32m+[m[32muse Yii;[m
+[32m+[m[32muse common\models\Tag;[m
+[32m+[m[32muse common\models\search\TagSearch;[m
+[32m+[m[32muse yii\web\Controller;[m
+[32m+[m[32muse yii\web\NotFoundHttpException;[m
+[32m+[m[32muse yii\filters\VerbFilter;[m
+[32m+[m[32muse yii\grid\GridView;[m
+[32m+[m[32muse \yii\web\Response;[m
+[32m+[m
+[32m+[m[32m/**[m
+[32m+[m[32m * TagController implements the CRUD actions for Tag model.[m
+[32m+[m[32m */[m
+[32m+[m[32mclass TagController extends Controller[m
+[32m+[m[32m{[m
+[32m+[m[32m    /**[m
+[32m+[m[32m     * @inheritdoc[m
+[32m+[m[32m     */[m
+[32m+[m[32m    public function behaviors()[m
+[32m+[m[32m    {[m
+[32m+[m[32m        return [[m
+[32m+[m[32m            'verbs' => [[m
+[32m+[m[32m                'class' => VerbFilter::className(),[m
+[32m+[m[32m                'actions' => [[m
+[32m+[m[32m                    'delete' => ['post'],[m
+[32m+[m[32m                    'bulk-delete' => ['post'],[m
+[32m+[m[32m                ],[m
+[32m+[m[32m            ],[m
+[32m+[m[32m        ];[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    /**[m
+[32m+[m[32m     * Lists all Tag models.[m
+[32m+[m[32m     * @return mixed[m
+[32m+[m[32m     */[m
+[32m+[m[32m    public function actionIndex()[m
+[32m+[m[32m    {[m[41m    [m
+[32m+[m[32m        $searchModel = new TagSearch();[m
+[32m+[m[32m        $dataProvider = $searchModel->search(Yii::$app->request->queryParams);[m
+[32m+[m
+[32m+[m[32m        return $this->render('index', [[m
+[32m+[m[32m            'searchModel' => $searchModel,[m
+[32m+[m[32m            'dataProvider' => $dataProvider,[m
+[32m+[m[32m        ]);[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m
+[32m+[m[32m    /**[m
+[32m+[m[32m     * Displays a single Tag model.[m
+[32m+[m[32m     * @param integer $id[m
+[32m+[m[32m     * @return mixed[m
+[32m+[m[32m     */[m
+[32m+[m[32m    public function actionView($id)[m
+[32m+[m[32m    {[m[41m   [m
+[32m+[m[32m        $request = Yii::$app->request;[m
+[32m+[m[32m        if($request->isAjax){[m
+[32m+[m[32m            Yii::$app->response->format = Response::FORMAT_JSON;[m
+[32m+[m[32m            return [[m
+[32m+[m[32m                    'code'=>'200',[m
+[32m+[m[32m                    'message'=>'OK',[m
+[32m+[m[32m                    'data'=>$this->renderPartial('view', [[m
+[32m+[m[32m                        'model' => $this->findModel($id),[m
+[32m+[m[32m                    ])[m
+[32m+[m[32m                ];[m[41m    [m
+[32m+[m[32m        }else{[m
+[32m+[m[32m            return $this->render('view', [[m
+[32m+[m[32m                'model' => $this->findModel($id),[m
+[32m+[m[32m            ]);[m
+[32m+[m[32m        }[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    /**[m
+[32m+[m[32m     * Creates a new Tag model.[m
+[32m+[m[32m     * For ajax request will return json object[m
+[32m+[m[32m     * and for non-ajax request if creation is successful, the browser will be redirected to the 'view' page.[m
+[32m+[m[32m     * @return mixed[m
+[32m+[m[32m     */[m
+[32m+[m[32m    public function actionCreate()[m
+[32m+[m[32m    {[m
+[32m+[m[32m        $request = Yii::$app->request;[m
+[32m+[m[32m        $model = new Tag();[m[41m  [m
+[32m+[m
+[32m+[m[32m        if($request->isAjax){[m
+[32m+[m[32m            /*[m
+[32m+[m[32m            *   Process for ajax request[m
+[32m+[m[32m            */[m
+[32m+[m[32m            Yii::$app->response->format = Response::FORMAT_JSON;[m
+[32m+[m[32m            if($request->isGet){[m
+[32m+[m[32m                return [[m
+[32m+[m[32m                    'code'=>'200',[m
+[32m+[m[32m                    'message'=>'OK',[m
+[32m+[m[32m                    'data'=>$this->renderPartial('create', [[m
+[32m+[m[32m                        'model' => $model,[m
+[32m+[m[32m                    ]),[m
+[32m+[m[32m                ];[m[41m         [m
+[32m+[m[32m            }else if($model->load($request->post()) && $model->save()){[m
+[32m+[m[32m                return [[m
+[32m+[m[32m                    'code'=>'200',[m
+[32m+[m[32m                    'message'=>'Create Tag success',[m
+[32m+[m[32m                ];[m
+[32m+[m[32m            }else{[m
+[32m+[m[32m                return [[m
+[32m+[m[32m                    'code'=>'400',[m
+[32m+[m[32m                    'message'=>'Validate error',[m
+[32m+[m[32m                    'data'=>$this->renderPartial('create', [[m
+[32m+[m[32m                        'model' => $model,[m
+[32m+[m[32m                    ]),[m
+[32m+[m[32m                ];[m[41m         [m
+[32m+[m[32m            }[m
+[32m+[m[32m        }else{[m
+[32m+[m[32m            /*[m
+[32m+[m[32m            *   Process for non-ajax request[m
+[32m+[m[32m            */[m
+[32m+[m[32m            if ($model->load($request->post()) && $model->save()) {[m
+[32m+[m[32m                return $this->redirect(['view', 'id' => $model->id]);[m
+[32m+[m[32m            } else {[m
+[32m+[m[32m                return $this->render('create', [[m
+[32m+[m[32m                    'model' => $model,[m
+[32m+[m[32m                ]);[m
+[32m+[m[32m            }[m
+[32m+[m[32m        }[m
+[32m+[m[41m       [m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    /**[m
+[32m+[m[32m     * Updates an existing Tag model.[m
+[32m+[m[32m     * For ajax request will return json object[m
+[32m+[m[32m     * and for non-ajax request if update is successful, the browser will be redirected to the 'view' page.[m
+[32m+[m[32m     * @param integer $id[m
+[32m+[m[32m     * @return mixed[m
+[32m+[m[32m     */[m
+[32m+[m[32m    public function actionUpdate($id)[m
+[32m+[m[32m    {[m
+[32m+[m[32m        $request = Yii::$app->request;[m
+[32m+[m[32m        $model = $this->findModel($id);[m[41m       [m
+[32m+[m
+[32m+[m[32m        if($request->isAjax){[m
+[32m+[m[32m            /*[m
+[32m+[m[32m            *   Process for ajax request[m
+[32m+[m[32m            */[m
+[32m+[m[32m            Yii::$app->response->format = Response::FORMAT_JSON;[m
+[32m+[m[32m            if($request->isGet){[m
+[32m+[m[32m                return [[m
+[32m+[m[32m                    'code'=>'200',[m
+[32m+[m[32m                    'message'=>'OK',[m
+[32m+[m[32m                    'data'=>$this->renderPartial('update', [[m
+[32m+[m[32m                        'model' => $model,[m
+[32m+[m[32m                    ]),[m
+[32m+[m[32m                ];[m[41m         [m
+[32m+[m[32m            }else if($model->load($request->post()) && $model->save()){[m
+[32m+[m[32m                return [[m
+[32m+[m[32m                    'code'=>'200',[m
+[32m+[m[32m                    'message'=>'Create Tag success',[m
+[32m+[m[32m                ];[m
+[32m+[m[32m            }else{[m
+[32m+[m[32m                return [[m
+[32m+[m[32m                    'code'=>'400',[m
+[32m+[m[32m                    'message'=>'Validate error',[m
+[32m+[m[32m                    'data'=>$this->renderPartial('update', [[m
+[32m+[m[32m                        'model' => $model,[m
+[32m+[m[32m                    ]),[m
+[32m+[m[32m                ];[m[41m         [m
+[32m+[m[32m            }[m
+[32m+[m[32m        }else{[m
+[32m+[m[32m            /*[m
+[32m+[m[32m            *   Process for non-ajax request[m
+[32m+[m[32m            */[m
+[32m+[m[32m            if ($model->load($request->post()) && $model->save()) {[m
+[32m+[m[32m                return $this->redirect(['view', 'id' => $model->id]);[m
+[32m+[m[32m            } else {[m
+[32m+[m[32m                return $this->render('update', [[m
+[32m+[m[32m                    'model' => $model,[m
+[32m+[m[32m                ]);[m
+[32m+[m[32m            }[m
+[32m+[m[32m        }[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    /**[m
+[32m+[m[32m     * Delete an existing Tag model.[m
+[32m+[m[32m     * For ajax request will return json object[m
+[32m+[m[32m     * and for non-ajax request if deletion is successful, the browser will be redirected to the 'index' page.[m
+[32m+[m[32m     * @param integer $id[m
+[32m+[m[32m     * @return mixed[m
+[32m+[m[32m     */[m
+[32m+[m[32m    public function actionDelete($id)[m
+[32m+[m[32m    {[m
+[32m+[m[32m        $this->findModel($id)->delete();[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m     /**[m
+[32m+[m[32m     * Delete multiple existing Tag model.[m
+[32m+[m[32m     * For ajax request will return json object[m
+[32m+[m[32m     * and for non-ajax request if deletion is successful, the browser will be redirected to the 'index' page.[m
+[32m+[m[32m     * @param integer $id[m
+[32m+[m[32m     * @return mixed[m
+[32m+[m[32m     */[m
+[32m+[m[32m    public function actionBulkDelete()[m
+[32m+[m[32m    {[m[41m        [m
+[32m+[m[32m        $request = Yii::$app->request;[m
+[32m+[m[32m        $pks = $request->post('pks'); // Array or selected records primary keys[m
+[32m+[m[32m        foreach (Tag::findAll(json_decode($pks)) as $model) {[m
+[32m+[m[32m            $model->delete();[m
+[32m+[m[32m        }[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    /**[m
+[32m+[m[32m     * Finds the Tag model based on its primary key value.[m
+[32m+[m[32m     * If the model is not found, a 404 HTTP exception will be thrown.[m
+[32m+[m[32m     * @param integer $id[m
+[32m+[m[32m     * @return Tag the loaded model[m
+[32m+[m[32m     * @throws NotFoundHttpException if the model cannot be found[m
+[32m+[m[32m     */[m
+[32m+[m[32m    protected function findModel($id)[m
+[32m+[m[32m    {[m
+[32m+[m[32m        if (($model = Tag::findOne($id)) !== null) {[m
+[32m+[m[32m            return $model;[m
+[32m+[m[32m        } else {[m
+[32m+[m[32m            throw new NotFoundHttpException('The requested page does not exist.');[m
+[32m+[m[32m        }[m
+[32m+[m[32m    }[m
+[32m+[m[32m}[m
+[1mdiff --git a/backend/controllers/UserController.php b/backend/controllers/UserController.php[m
+[1mnew file mode 100644[m
+[1mindex 0000000..6e55d08[m
+[1m--- /dev/null[m
+[1m+++ b/backend/controllers/UserController.php[m
+[36m@@ -0,0 +1,224 @@[m
+[32m+[m[32m<?php[m
+[32m+[m
+[32m+[m[32mnamespace backend\controllers;[m
+[32m+[m
+[32m+[m[32muse Yii;[m
+[32m+[m[32muse common\models\User;[m
+[32m+[m[32muse common\models\UserSearch;[m
+[32m+[m[32muse yii\web\Controller;[m
+[32m+[m[32muse yii\web\NotFoundHttpException;[m
+[32m+[m[32muse yii\filters\VerbFilter;[m
+[32m+[m[32muse yii\grid\GridView;[m
+[32m+[m[32muse \yii\web\Response;[m
+[32m+[m
+[32m+[m[32m/**[m
+[32m+[m[32m * UserController implements the CRUD actions for User model.[m
+[32m+[m[32m */[m
+[32m+[m[32mclass UserController extends Controller[m
+[32m+[m[32m{[m
+[32m+[m[32m    /**[m
+[32m+[m[32m     * @inheritdoc[m
+[32m+[m[32m     */[m
+[32m+[m[32m    public function behaviors()[m
+[32m+[m[32m    {[m
+[32m+[m[32m        return [[m
+[32m+[m[32m            'verbs' => [[m
+[32m+[m[32m                'class' => VerbFilter::className(),[m
+[32m+[m[32m                'actions' => [[m
+[32m+[m[32m                    'delete' => ['post'],[m
+[32m+[m[32m                    'bulk-delete' => ['post'],[m
+[32m+[m[32m                ],[m
+[32m+[m[32m            ],[m
+[32m+[m[32m        ];[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    /**[m
+[32m+[m[32m     * Lists all User models.[m
+[32m+[m[32m     * @return mixed[m
+[32m+[m[32m     */[m
+[32m+[m[32m    public function actionIndex()[m
+[32m+[m[32m    {[m[41m    [m
+[32m+[m[32m        $searchModel = new UserSearch();[m
+[32m+[m[32m        $dataProvider = $searchModel->search(Yii::$app->request->queryParams);[m
+[32m+[m
+[32m+[m[32m        return $this->render('index', [[m
+[32m+[m[32m            'searchModel' => $searchModel,[m
+[32m+[m[32m            'dataProvider' => $dataProvider,[m
+[32m+[m[32m        ]);[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m
+[32m+[m[32m    /**[m
+[32m+[m[32m     * Displays a single User model.[m
+[32m+[m[32m     * @param integer $id[m
+[32m+[m[32m     * @return mixed[m
+[32m+[m[32m     */[m
+[32m+[m[32m    public function actionView($id)[m
+[32m+[m[32m    {[m[41m   [m
+[32m+[m[32m        $request = Yii::$app->request;[m
+[32m+[m[32m        if($request->isAjax){[m
+[32m+[m[32m            Yii::$app->response->format = Response::FORMAT_JSON;[m
+[32m+[m[32m            return [[m
+[32m+[m[32m                    'code'=>'200',[m
+[32m+[m[32m                    'message'=>'OK',[m
+[32m+[m[32m                    'data'=>$this->renderPartial('view', [[m
+[32m+[m[32m                        'model' => $this->findModel($id),[m
+[32m+[m[32m                    ])[m
+[32m+[m[32m                ];[m[41m    [m
+[32m+[m[32m        }else{[m
+[32m+[m[32m            return $this->render('view', [[m
+[32m+[m[32m                'model' => $this->findModel($id),[m
+[32m+[m[32m            ]);[m
+[32m+[m[32m        }[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    /**[m
+[32m+[m[32m     * Creates a new User model.[m
+[32m+[m[32m     * For ajax request will return json object[m
+[32m+[m[32m     * and for non-ajax request if creation is successful, the browser will be redirected to the 'view' page.[m
+[32m+[m[32m     * @return mixed[m
+[32m+[m[32m     */[m
+[32m+[m[32m    public function actionCreate()[m
+[32m+[m[32m    {[m
+[32m+[m[32m        $request = Yii::$app->request;[m
+[32m+[m[32m        $model = new User();[m[41m  [m
+[32m+[m
+[32m+[m[32m        if($request->isAjax){[m
+[32m+[m[32m            /*[m
+[32m+[m[32m            *   Process for ajax request[m
+[32m+[m[32m            */[m
+[32m+[m[32m            Yii::$app->response->format = Response::FORMAT_JSON;[m
+[32m+[m[32m            if($request->isGet){[m
+[32m+[m[32m                return [[m
+[32m+[m[32m                    'code'=>'200',[m
+[32m+[m[32m                    'message'=>'OK',[m
+[32m+[m[32m                    'data'=>$this->renderPartial('create', [[m
+[32m+[m[32m                        'model' => $model,[m
+[32m+[m[32m                    ]),[m
+[32m+[m[32m                ];[m[41m         [m
+[32m+[m[32m            }else if($model->load($request->post()) && $model->save()){[m
+[32m+[m[32m                return [[m
+[32m+[m[32m                    'code'=>'200',[m
+[32m+[m[32m                    'message'=>'Create User success',[m
+[32m+[m[32m                ];[m
+[32m+[m[32m            }else{[m
+[32m+[m[32m                return [[m
+[32m+[m[32m                    'code'=>'400',[m
+[32m+[m[32m                    'message'=>'Validate error',[m
+[32m+[m[32m                    'data'=>$this->renderPartial('create', [[m
+[32m+[m[32m                        'model' => $model,[m
+[32m+[m[32m                    ]),[m
+[32m+[m[32m                ];[m[41m         [m
+[32m+[m[32m            }[m
+[32m+[m[32m        }else{[m
+[32m+[m[32m            /*[m
+[32m+[m[32m            *   Process for non-ajax request[m
+[32m+[m[32m            */[m
+[32m+[m[32m            if ($model->load($request->post()) && $model->save()) {[m
+[32m+[m[32m                return $this->redirect(['view', 'id' => $model->id]);[m
+[32m+[m[32m            } else {[m
+[32m+[m[32m                return $this->render('create', [[m
+[32m+[m[32m                    'model' => $model,[m
+[32m+[m[32m                ]);[m
+[32m+[m[32m            }[m
+[32m+[m[32m        }[m
+[32m+[m[41m       [m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    /**[m
+[32m+[m[32m     * Updates an existing User model.[m
+[32m+[m[32m     * For ajax request will return json object[m
+[32m+[m[32m     * and for non-ajax request if update is successful, the browser will be redirected to the 'view' page.[m
+[32m+[m[32m     * @param integer $id[m
+[32m+[m[32m     * @return mixed[m
+[32m+[m[32m     */[m
+[32m+[m[32m    public function actionUpdate($id)[m
+[32m+[m[32m    {[m
+[32m+[m[32m        $request = Yii::$app->request;[m
+[32m+[m[32m        $model = $this->findModel($id);[m[41m       [m
+[32m+[m
+[32m+[m[32m        if($request->isAjax){[m
+[32m+[m[32m            /*[m
+[32m+[m[32m            *   Process for ajax request[m
+[32m+[m[32m            */[m
+[32m+[m[32m            Yii::$app->response->format = Response::FORMAT_JSON;[m
+[32m+[m[32m            if($request->isGet){[m
+[32m+[m[32m                return [[m
+[32m+[m[32m                    'code'=>'200',[m
+[32m+[m[32m                    'message'=>'OK',[m
+[32m+[m[32m                    'data'=>$this->renderPartial('update', [[m
+[32m+[m[32m                        'model' => $model,[m
+[32m+[m[32m                    ]),[m
+[32m+[m[32m                ];[m[41m         [m
+[32m+[m[32m            }else if($model->load($request->post()) && $model->save()){[m
+[32m+[m[32m                return [[m
+[32m+[m[32m                    'code'=>'200',[m
+[32m+[m[32m                    'message'=>'Create User success',[m
+[32m+[m[32m                ];[m
+[32m+[m[32m            }else{[m
+[32m+[m[32m                return [[m
+[32m+[m[32m                    'code'=>'400',[m
+[32m+[m[32m                    'message'=>'Validate error',[m
+[32m+[m[32m                    'data'=>$this->renderPartial('update', [[m
+[32m+[m[32m                        'model' => $model,[m
+[32m+[m[32m                    ]),[m
+[32m+[m[32m                ];[m[41m         [m
+[32m+[m[32m            }[m
+[32m+[m[32m        }else{[m
+[32m+[m[32m            /*[m
+[32m+[m[32m            *   Process for non-ajax request[m
+[32m+[m[32m            */[m
+[32m+[m[32m            if ($model->load($request->post()) && $model->save()) {[m
+[32m+[m[32m                return $this->redirect(['view', 'id' => $model->id]);[m
+[32m+[m[32m            } else {[m
+[32m+[m[32m                return $this->render('update', [[m
+[32m+[m[32m                    'model' => $model,[m
+[32m+[m[32m                ]);[m
+[32m+[m[32m            }[m
+[32m+[m[32m        }[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    /**[m
+[32m+[m[32m     * Delete an existing User model.[m
+[32m+[m[32m     * For ajax request will return json object[m
+[32m+[m[32m     * and for non-ajax request if deletion is successful, the browser will be redirected to the 'index' page.[m
+[32m+[m[32m     * @param integer $id[m
+[32m+[m[32m     * @return mixed[m
+[32m+[m[32m     */[m
+[32m+[m[32m    public function actionDelete($id)[m
+[32m+[m[32m    {[m
+[32m+[m[32m        $this->findModel($id)->delete();[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m     /**[m
+[32m+[m[32m     * Delete multiple existing User model.[m
+[32m+[m[32m     * For ajax request will return json object[m
+[32m+[m[32m     * and for non-ajax request if deletion is successful, the browser will be redirected to the 'index' page.[m
+[32m+[m[32m     * @param integer $id[m
+[32m+[m[32m     * @return mixed[m
+[32m+[m[32m     */[m
+[32m+[m[32m    public function actionBulkDelete()[m
+[32m+[m[32m    {[m[41m        [m
+[32m+[m[32m        $request = Yii::$app->request;[m
+[32m+[m[32m        $pks = $request->post('pks'); // Array or selected records primary keys[m
+[32m+[m[32m        foreach (User::findAll(json_decode($pks)) as $model) {[m
+[32m+[m[32m            $model->delete();[m
+[32m+[m[32m        }[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    /**[m
+[32m+[m[32m     * Finds the User model based on its primary key value.[m
+[32m+[m[32m     * If the model is not found, a 404 HTTP exception will be thrown.[m
+[32m+[m[32m     * @param integer $id[m
+[32m+[m[32m     * @return User the loaded model[m
+[32m+[m[32m     * @throws NotFoundHttpException if the model cannot be found[m
+[32m+[m[32m     */[m
+[32m+[m[32m    protected function findModel($id)[m
+[32m+[m[32m    {[m
+[32m+[m[32m        if (($model = User::findOne($id)) !== null) {[m
+[32m+[m[32m            return $model;[m
+[32m+[m[32m        } else {[m
+[32m+[m[32m            throw new NotFoundHttpException('The requested page does not exist.');[m
+[32m+[m[32m        }[m
+[32m+[m[32m    }[m
+[32m+[m[32m}[m
+[1mdiff --git a/backend/controllers/UserTypeController.php b/backend/controllers/UserTypeController.php[m
+[1mnew file mode 100644[m
+[1mindex 0000000..2a0d062[m
+[1m--- /dev/null[m
+[1m+++ b/backend/controllers/UserTypeController.php[m
+[36m@@ -0,0 +1,224 @@[m
+[32m+[m[32m<?php[m
+[32m+[m
+[32m+[m[32mnamespace backend\controllers;[m
+[32m+[m
+[32m+[m[32muse Yii;[m
+[32m+[m[32muse backend\models\UserType;[m
+[32m+[m[32muse backend\models\search\UserType as UserTypeSearch;[m
+[32m+[m[32muse yii\web\Controller;[m
+[32m+[m[32muse yii\web\NotFoundHttpException;[m
+[32m+[m[32muse yii\filters\VerbFilter;[m
+[32m+[m[32muse yii\grid\GridView;[m
+[32m+[m[32muse \yii\web\Response;[m
+[32m+[m
+[32m+[m[32m/**[m
+[32m+[m[32m * UserTypeController implements the CRUD actions for UserType model.[m
+[32m+[m[32m */[m
+[32m+[m[32mclass UserTypeController extends Controller[m
+[32m+[m[32m{[m
+[32m+[m[32m    /**[m
+[32m+[m[32m     * @inheritdoc[m
+[32m+[m[32m     */[m
+[32m+[m[32m    public function behaviors()[m
+[32m+[m[32m    {[m
+[32m+[m[32m        return [[m
+[32m+[m[32m            'verbs' => [[m
+[32m+[m[32m                'class' => VerbFilter::className(),[m
+[32m+[m[32m                'actions' => [[m
+[32m+[m[32m                    'delete' => ['post'],[m
+[32m+[m[32m                    'bulk-delete' => ['post'],[m
+[32m+[m[32m                ],[m
+[32m+[m[32m            ],[m
+[32m+[m[32m        ];[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    /**[m
+[32m+[m[32m     * Lists all UserType models.[m
+[32m+[m[32m     * @return mixed[m
+[32m+[m[32m     */[m
+[32m+[m[32m    public function actionIndex()[m
+[32m+[m[32m    {[m[41m    [m
+[32m+[m[32m        $searchModel = new UserTypeSearch();[m
+[32m+[m[32m        $dataProvider = $searchModel->search(Yii::$app->request->queryParams);[m
+[32m+[m
+[32m+[m[32m        return $this->render('index', [[m
+[32m+[m[32m            'searchModel' => $searchModel,[m
+[32m+[m[32m            'dataProvider' => $dataProvider,[m
+[32m+[m[32m        ]);[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m
+[32m+[m[32m    /**[m
+[32m+[m[32m     * Displays a single UserType model.[m
+[32m+[m[32m     * @param integer $id[m
+[32m+[m[32m     * @return mixed[m
+[32m+[m[32m     */[m
+[32m+[m[32m    public function actionView($id)[m
+[32m+[m[32m    {[m[41m   [m
+[32m+[m[32m        $request = Yii::$app->request;[m
+[32m+[m[32m        if($request->isAjax){[m
+[32m+[m[32m            Yii::$app->response->format = Response::FORMAT_JSON;[m
+[32m+[m[32m            return [[m
+[32m+[m[32m                    'code'=>'200',[m
+[32m+[m[32m                    'message'=>'OK',[m
+[32m+[m[32m                    'data'=>$this->renderPartial('view', [[m
+[32m+[m[32m                        'model' => $this->findModel($id),[m
+[32m+[m[32m                    ])[m
+[32m+[m[32m                ];[m[41m    [m
+[32m+[m[32m        }else{[m
+[32m+[m[32m            return $this->render('view', [[m
+[32m+[m[32m                'model' => $this->findModel($id),[m
+[32m+[m[32m            ]);[m
+[32m+[m[32m        }[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    /**[m
+[32m+[m[32m     * Creates a new UserType model.[m
+[32m+[m[32m     * For ajax request will return json object[m
+[32m+[m[32m     * and for non-ajax request if creation is successful, the browser will be redirected to the 'view' page.[m
+[32m+[m[32m     * @return mixed[m
+[32m+[m[32m     */[m
+[32m+[m[32m    public function actionCreate()[m
+[32m+[m[32m    {[m
+[32m+[m[32m        $request = Yii::$app->request;[m
+[32m+[m[32m        $model = new UserType();[m[41m  [m
+[32m+[m
+[32m+[m[32m        if($request->isAjax){[m
+[32m+[m[32m            /*[m
+[32m+[m[32m            *   Process for ajax request[m
+[32m+[m[32m            */[m
+[32m+[m[32m            Yii::$app->response->format = Response::FORMAT_JSON;[m
+[32m+[m[32m            if($request->isGet){[m
+[32m+[m[32m                return [[m
+[32m+[m[32m                    'code'=>'200',[m
+[32m+[m[32m                    'message'=>'OK',[m
+[32m+[m[32m                    'data'=>$this->renderPartial('create', [[m
+[32m+[m[32m                        'model' => $model,[m
+[32m+[m[32m                    ]),[m
+[32m+[m[32m                ];[m[41m         [m
+[32m+[m[32m            }else if($model->load($request->post()) && $model->save()){[m
+[32m+[m[32m                return [[m
+[32m+[m[32m                    'code'=>'200',[m
+[32m+[m[32m                    'message'=>'Create UserType success',[m
+[32m+[m[32m                ];[m
+[32m+[m[32m            }else{[m
+[32m+[m[32m                return [[m
+[32m+[m[32m                    'code'=>'400',[m
+[32m+[m[32m                    'message'=>'Validate error',[m
+[32m+[m[32m                    'data'=>$this->renderPartial('create', [[m
+[32m+[m[32m                        'model' => $model,[m
+[32m+[m[32m                    ]),[m
+[32m+[m[32m                ];[m[41m         [m
+[32m+[m[32m            }[m
+[32m+[m[32m        }else{[m
+[32m+[m[32m            /*[m
+[32m+[m[32m            *   Process for non-ajax request[m
+[32m+[m[32m            */[m
+[32m+[m[32m            if ($model->load($request->post()) && $model->save()) {[m
+[32m+[m[32m                return $this->redirect(['view', 'id' => $model->id]);[m
+[32m+[m[32m            } else {[m
+[32m+[m[32m                return $this->render('create', [[m
+[32m+[m[32m                    'model' => $model,[m
+[32m+[m[32m                ]);[m
+[32m+[m[32m            }[m
+[32m+[m[32m        }[m
+[32m+[m[41m       [m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    /**[m
+[32m+[m[32m     * Updates an existing UserType model.[m
+[32m+[m[32m     * For ajax request will return json object[m
+[32m+[m[32m     * and for non-ajax request if update is successful, the browser will be redirected to the 'view' page.[m
+[32m+[m[32m     * @param integer $id[m
+[32m+[m[32m     * @return mixed[m
+[32m+[m[32m     */[m
+[32m+[m[32m    public function actionUpdate($id)[m
+[32m+[m[32m    {[m
+[32m+[m[32m        $request = Yii::$app->request;[m
+[32m+[m[32m        $model = $this->findModel($id);[m[41m       [m
+[32m+[m
+[32m+[m[32m        if($request->isAjax){[m
+[32m+[m[32m            /*[m
+[32m+[m[32m            *   Process for ajax request[m
+[32m+[m[32m            */[m
+[32m+[m[32m            Yii::$app->response->format = Response::FORMAT_JSON;[m
+[32m+[m[32m            if($request->isGet){[m
+[32m+[m[32m                return [[m
+[32m+[m[32m                    'code'=>'200',[m
+[32m+[m[32m                    'message'=>'OK',[m
+[32m+[m[32m                    'data'=>$this->renderPartial('update', [[m
+[32m+[m[32m                        'model' => $model,[m
+[32m+[m[32m                    ]),[m
+[32m+[m[32m                ];[m[41m         [m
+[32m+[m[32m            }else if($model->load($request->post()) && $model->save()){[m
+[32m+[m[32m                return [[m
+[32m+[m[32m                    'code'=>'200',[m
+[32m+[m[32m                    'message'=>'Create UserType success',[m
+[32m+[m[32m                ];[m
+[32m+[m[32m            }else{[m
+[32m+[m[32m                return [[m
+[32m+[m[32m                    'code'=>'400',[m
+[32m+[m[32m                    'message'=>'Validate error',[m
+[32m+[m[32m                    'data'=>$this->renderPartial('update', [[m
+[32m+[m[32m                        'model' => $model,[m
+[32m+[m[32m                    ]),[m
+[32m+[m[32m                ];[m[41m         [m
+[32m+[m[32m            }[m
+[32m+[m[32m        }else{[m
+[32m+[m[32m            /*[m
+[32m+[m[32m            *   Process for non-ajax request[m
+[32m+[m[32m            */[m
+[32m+[m[32m            if ($model->load($request->post()) && $model->save()) {[m
+[32m+[m[32m                return $this->redirect(['view', 'id' => $model->id]);[m
+[32m+[m[32m            } else {[m
+[32m+[m[32m                return $this->render('update', [[m
+[32m+[m[32m                    'model' => $model,[m
+[32m+[m[32m                ]);[m
+[32m+[m[32m            }[m
+[32m+[m[32m        }[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    /**[m
+[32m+[m[32m     * Delete an existing UserType model.[m
+[32m+[m[32m     * For ajax request will return json object[m
+[32m+[m[32m     * and for non-ajax request if deletion is successful, the browser will be redirected to the 'index' page.[m
+[32m+[m[32m     * @param integer $id[m
+[32m+[m[32m     * @return mixed[m
+[32m+[m[32m     */[m
+[32m+[m[32m    public function actionDelete($id)[m
+[32m+[m[32m    {[m
+[32m+[m[32m        $this->findModel($id)->delete();[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m     /**[m
+[32m+[m[32m     * Delete multiple existing UserType model.[m
+[32m+[m[32m     * For ajax request will return json object[m
+[32m+[m[32m     * and for non-ajax request if deletion is successful, the browser will be redirected to the 'index' page.[m
+[32m+[m[32m     * @param integer $id[m
+[32m+[m[32m     * @return mixed[m
+[32m+[m[32m     */[m
+[32m+[m[32m    public function actionBulkDelete()[m
+[32m+[m[32m    {[m[41m        [m
+[32m+[m[32m        $request = Yii::$app->request;[m
+[32m+[m[32m        $pks = $request->post('pks'); // Array or selected records primary keys[m
+[32m+[m[32m        foreach (UserType::findAll(json_decode($pks)) as $model) {[m
+[32m+[m[32m            $model->delete();[m
+[32m+[m[32m        }[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    /**[m
+[32m+[m[32m     * Finds the UserType model based on its primary key value.[m
+[32m+[m[32m     * If the model is not found, a 404 HTTP exception will be thrown.[m
+[32m+[m[32m     * @param integer $id[m
+[32m+[m[32m     * @return UserType the loaded model[m
+[32m+[m[32m     * @throws NotFoundHttpException if the model cannot be found[m
+[32m+[m[32m     */[m
+[32m+[m[32m    protected function findModel($id)[m
+[32m+[m[32m    {[m
+[32m+[m[32m        if (($model = UserType::findOne($id)) !== null) {[m
+[32m+[m[32m            return $model;[m
+[32m+[m[32m        } else {[m
+[32m+[m[32m            throw new NotFoundHttpException('The requested page does not exist.');[m
+[32m+[m[32m        }[m
+[32m+[m[32m    }[m
+[32m+[m[32m}[m
+[1mdiff --git a/backend/models/Role.php b/backend/models/Role.php[m
+[1mnew file mode 100644[m
+[1mindex 0000000..d16d868[m
+[1m--- /dev/null[m
+[1m+++ b/backend/models/Role.php[m
+[36m@@ -0,0 +1,57 @@[m
+[32m+[m[32m<?php[m
+[32m+[m
+[32m+[m[32mnamespace backend\models;[m
+[32m+[m
+[32m+[m[32muse Yii;[m
+[32m+[m
+[32m+[m[32m/**[m
+[32m+[m[32m * This is the model class for table "role".[m
+[32m+[m[32m *[m
+[32m+[m[32m * @property integer $id[m
+[32m+[m[32m * @property string $role_name[m
+[32m+[m[32m * @property integer $role_value[m
+[32m+[m[32m *[m
+[32m+[m[32m * @property TblUser[] $tblUsers[m
+[32m+[m[32m */[m
+[32m+[m[32mclass Role extends \yii\db\ActiveRecord[m
+[32m+[m[32m{[m
+[32m+[m[32m    /**[m
+[32m+[m[32m     * @inheritdoc[m
+[32m+[m[32m     */[m
+[32m+[m[32m    public static function tableName()[m
+[32m+[m[32m    {[m
+[32m+[m[32m        return 'role';[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    /**[m
+[32m+[m[32m     * @inheritdoc[m
+[32m+[m[32m     */[m
+[32m+[m[32m    public function rules()[m
+[32m+[m[32m    {[m
+[32m+[m[32m        return [[m
+[32m+[m[32m            [['role_name', 'role_value'], 'required'],[m
+[32m+[m[32m            [['role_value'], 'integer'],[m
+[32m+[m[32m            [['role_name'], 'string', 'max' => 45][m
+[32m+[m[32m        ];[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    /**[m
+[32m+[m[32m     * @inheritdoc[m
+[32m+[m[32m     */[m
+[32m+[m[32m    public function attributeLabels()[m
+[32m+[m[32m    {[m
+[32m+[m[32m        return [[m
+[32m+[m[32m            'id' => Yii::t('app', 'ID'),[m
+[32m+[m[32m            'role_name' => Yii::t('app', 'Role Name'),[m
+[32m+[m[32m            'role_value' => Yii::t('app', 'Role Value'),[m
+[32m+[m[32m        ];[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    /**[m
+[32m+[m[32m     * @return \yii\db\ActiveQuery[m
+[32m+[m[32m     */[m
+[32m+[m[32m    public function getTblUsers()[m
+[32m+[m[32m    {[m
+[32m+[m[32m        return $this->hasMany(TblUser::className(), ['role_id' => 'id']);[m
+[32m+[m[32m    }[m
+[32m+[m[32m}[m
+[1mdiff --git a/backend/models/Status.php b/backend/models/Status.php[m
+[1mnew file mode 100644[m
+[1mindex 0000000..80245e9[m
+[1m--- /dev/null[m
+[1m+++ b/backend/models/Status.php[m
+[36m@@ -0,0 +1,57 @@[m
+[32m+[m[32m<?php[m
+[32m+[m
+[32m+[m[32mnamespace backend\models;[m
+[32m+[m
+[32m+[m[32muse Yii;[m
+[32m+[m
+[32m+[m[32m/**[m
+[32m+[m[32m * This is the model class for table "status".[m
+[32m+[m[32m *[m
+[32m+[m[32m * @property integer $id[m
+[32m+[m[32m * @property string $status_name[m
+[32m+[m[32m * @property integer $status_value[m
+[32m+[m[32m *[m
+[32m+[m[32m * @property TblUser[] $tblUsers[m
+[32m+[m[32m */[m
+[32m+[m[32mclass Status extends \yii\db\ActiveRecord[m
+[32m+[m[32m{[m
+[32m+[m[32m    /**[m
+[32m+[m[32m     * @inheritdoc[m
+[32m+[m[32m     */[m
+[32m+[m[32m    public static function tableName()[m
+[32m+[m[32m    {[m
+[32m+[m[32m        return 'status';[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    /**[m
+[32m+[m[32m     * @inheritdoc[m
+[32m+[m[32m     */[m
+[32m+[m[32m    public function rules()[m
+[32m+[m[32m    {[m
+[32m+[m[32m        return [[m
+[32m+[m[32m            [['status_name', 'status_value'], 'required'],[m
+[32m+[m[32m            [['status_value'], 'integer'],[m
+[32m+[m[32m            [['status_name'], 'string', 'max' => 45][m
+[32m+[m[32m        ];[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    /**[m
+[32m+[m[32m     * @inheritdoc[m
+[32m+[m[32m     */[m
+[32m+[m[32m    public function attributeLabels()[m
+[32m+[m[32m    {[m
+[32m+[m[32m        return [[m
+[32m+[m[32m            'id' => Yii::t('app', 'ID'),[m
+[32m+[m[32m            'status_name' => Yii::t('app', 'Status Name'),[m
+[32m+[m[32m            'status_value' => Yii::t('app', 'Status Value'),[m
+[32m+[m[32m        ];[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    /**[m
+[32m+[m[32m     * @return \yii\db\ActiveQuery[m
+[32m+[m[32m     */[m
+[32m+[m[32m    public function getTblUsers()[m
+[32m+[m[32m    {[m
+[32m+[m[32m        return $this->hasMany(TblUser::className(), ['status_id' => 'id']);[m
+[32m+[m[32m    }[m
+[32m+[m[32m}[m
+[1mdiff --git a/backend/models/UserType.php b/backend/models/UserType.php[m
+[1mnew file mode 100644[m
+[1mindex 0000000..6df9102[m
+[1m--- /dev/null[m
+[1m+++ b/backend/models/UserType.php[m
+[36m@@ -0,0 +1,57 @@[m
+[32m+[m[32m<?php[m
+[32m+[m
+[32m+[m[32mnamespace backend\models;[m
+[32m+[m
+[32m+[m[32muse Yii;[m
+[32m+[m
+[32m+[m[32m/**[m
+[32m+[m[32m * This is the model class for table "user_type".[m
+[32m+[m[32m *[m
+[32m+[m[32m * @property integer $id[m
+[32m+[m[32m * @property string $user_type_name[m
+[32m+[m[32m * @property integer $user_type_value[m
+[32m+[m[32m *[m
+[32m+[m[32m * @property TblUser[] $tblUsers[m
+[32m+[m[32m */[m
+[32m+[m[32mclass UserType extends \yii\db\ActiveRecord[m
+[32m+[m[32m{[m
+[32m+[m[32m    /**[m
+[32m+[m[32m     * @inheritdoc[m
+[32m+[m[32m     */[m
+[32m+[m[32m    public static function tableName()[m
+[32m+[m[32m    {[m
+[32m+[m[32m        return 'user_type';[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    /**[m
+[32m+[m[32m     * @inheritdoc[m
+[32m+[m[32m     */[m
+[32m+[m[32m    public function rules()[m
+[32m+[m[32m    {[m
+[32m+[m[32m        return [[m
+[32m+[m[32m            [['user_type_name', 'user_type_value'], 'required'],[m
+[32m+[m[32m            [['user_type_value'], 'integer'],[m
+[32m+[m[32m            [['user_type_name'], 'string', 'max' => 45][m
+[32m+[m[32m        ];[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    /**[m
+[32m+[m[32m     * @inheritdoc[m
+[32m+[m[32m     */[m
+[32m+[m[32m    public function attributeLabels()[m
+[32m+[m[32m    {[m
+[32m+[m[32m        return [[m
+[32m+[m[32m            'id' => Yii::t('app', 'ID'),[m
+[32m+[m[32m            'user_type_name' => Yii::t('app', 'User Type Name'),[m
+[32m+[m[32m            'user_type_value' => Yii::t('app', 'User Type Value'),[m
+[32m+[m[32m        ];[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    /**[m
+[32m+[m[32m     * @return \yii\db\ActiveQuery[m
+[32m+[m[32m     */[m
+[32m+[m[32m    public function getTblUsers()[m
+[32m+[m[32m    {[m
+[32m+[m[32m        return $this->hasMany(TblUser::className(), ['user_type_id' => 'id']);[m
+[32m+[m[32m    }[m
+[32m+[m[32m}[m
+[1mdiff --git a/backend/models/search/RoleSearch.php b/backend/models/search/RoleSearch.php[m
+[1mnew file mode 100644[m
+[1mindex 0000000..e74a265[m
+[1m--- /dev/null[m
+[1m+++ b/backend/models/search/RoleSearch.php[m
+[36m@@ -0,0 +1,67 @@[m
+[32m+[m[32m<?php[m
+[32m+[m
+[32m+[m[32mnamespace backend\models\search;[m
+[32m+[m
+[32m+[m[32muse Yii;[m
+[32m+[m[32muse yii\base\Model;[m
+[32m+[m[32muse yii\data\ActiveDataProvider;[m
+[32m+[m[32muse backend\models\Role;[m
+[32m+[m
+[32m+[m[32m/**[m
+[32m+[m[32m * RoleSearch represents the model behind the search form about `backend\models\Role`.[m
+[32m+[m[32m */[m
+[32m+[m[32mclass RoleSearch extends Role[m
+[32m+[m[32m{[m
+[32m+[m[32m    /**[m
+[32m+[m[32m     * @inheritdoc[m
+[32m+[m[32m     */[m
+[32m+[m[32m    public function rules()[m
+[32m+[m[32m    {[m
+[32m+[m[32m        return [[m
+[32m+[m[32m            [['id', 'role_value'], 'integer'],[m
+[32m+[m[32m            [['role_name'], 'safe'],[m
+[32m+[m[32m        ];[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    /**[m
+[32m+[m[32m     * @inheritdoc[m
+[32m+[m[32m     */[m
+[32m+[m[32m    public function scenarios()[m
+[32m+[m[32m    {[m
+[32m+[m[32m        // bypass scenarios() implementation in the parent class[m
+[32m+[m[32m        return Model::scenarios();[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    /**[m
+[32m+[m[32m     * Creates data provider instance with search query applied[m
+[32m+[m[32m     *[m
+[32m+[m[32m     * @param array $params[m
+[32m+[m[32m     *[m
+[32m+[m[32m     * @return ActiveDataProvider[m
+[32m+[m[32m     */[m
+[32m+[m[32m    public function search($params)[m
+[32m+[m[32m    {[m
+[32m+[m[32m        $query = Role::find();[m
+[32m+[m
+[32m+[m[32m        $dataProvider = new ActiveDataProvider([[m
+[32m+[m[32m            'query' => $query,[m
+[32m+[m[32m        ]);[m
+[32m+[m
+[32m+[m[32m        $this->load($params);[m
+[32m+[m
+[32m+[m[32m        if (!$this->validate()) {[m
+[32m+[m[32m            // uncomment the following line if you do not want to return any records when validation fails[m
+[32m+[m[32m            // $query->where('0=1');[m
+[32m+[m[32m            return $dataProvider;[m
+[32m+[m[32m        }[m
+[32m+[m
+[32m+[m[32m        $query->andFilterWhere([[m
+[32m+[m[32m            'id' => $this->id,[m
+[32m+[m[32m            'role_value' => $this->role_value,[m
+[32m+[m[32m        ]);[m
+[32m+[m
+[32m+[m[32m        $query->andFilterWhere(['like', 'role_name', $this->role_name]);[m
+[32m+[m
+[32m+[m[32m        return $dataProvider;[m
+[32m+[m[32m    }[m
+[32m+[m[32m}[m
+[1mdiff --git a/backend/models/search/StatusSearch.php b/backend/models/search/StatusSearch.php[m
+[1mnew file mode 100644[m
+[1mindex 0000000..cacc12d[m
+[1m--- /dev/null[m
+[1m+++ b/backend/models/search/StatusSearch.php[m
+[36m@@ -0,0 +1,67 @@[m
+[32m+[m[32m<?php[m
+[32m+[m
+[32m+[m[32mnamespace backend\models\search;[m
+[32m+[m
+[32m+[m[32muse Yii;[m
+[32m+[m[32muse yii\base\Model;[m
+[32m+[m[32muse yii\data\ActiveDataProvider;[m
+[32m+[m[32muse backend\models\Status;[m
+[32m+[m
+[32m+[m[32m/**[m
+[32m+[m[32m * StatusSearch represents the model behind the search form about `backend\models\Status`.[m
+[32m+[m[32m */[m
+[32m+[m[32mclass StatusSearch extends Status[m
+[32m+[m[32m{[m
+[32m+[m[32m    /**[m
+[32m+[m[32m     * @inheritdoc[m
+[32m+[m[32m     */[m
+[32m+[m[32m    public function rules()[m
+[32m+[m[32m    {[m
+[32m+[m[32m        return [[m
+[32m+[m[32m            [['id', 'status_value'], 'integer'],[m
+[32m+[m[32m            [['status_name'], 'safe'],[m
+[32m+[m[32m        ];[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    /**[m
+[32m+[m[32m     * @inheritdoc[m
+[32m+[m[32m     */[m
+[32m+[m[32m    public function scenarios()[m
+[32m+[m[32m    {[m
+[32m+[m[32m        // bypass scenarios() implementation in the parent class[m
+[32m+[m[32m        return Model::scenarios();[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    /**[m
+[32m+[m[32m     * Creates data provider instance with search query applied[m
+[32m+[m[32m     *[m
+[32m+[m[32m     * @param array $params[m
+[32m+[m[32m     *[m
+[32m+[m[32m     * @return ActiveDataProvider[m
+[32m+[m[32m     */[m
+[32m+[m[32m    public function search($params)[m
+[32m+[m[32m    {[m
+[32m+[m[32m        $query = Status::find();[m
+[32m+[m
+[32m+[m[32m        $dataProvider = new ActiveDataProvider([[m
+[32m+[m[32m            'query' => $query,[m
+[32m+[m[32m        ]);[m
+[32m+[m
+[32m+[m[32m        $this->load($params);[m
+[32m+[m
+[32m+[m[32m        if (!$this->validate()) {[m
+[32m+[m[32m            // uncomment the following line if you do not want to return any records when validation fails[m
+[32m+[m[32m            // $query->where('0=1');[m
+[32m+[m[32m            return $dataProvider;[m
+[32m+[m[32m        }[m
+[32m+[m
+[32m+[m[32m        $query->andFilterWhere([[m
+[32m+[m[32m            'id' => $this->id,[m
+[32m+[m[32m            'status_value' => $this->status_value,[m
+[32m+[m[32m        ]);[m
+[32m+[m
+[32m+[m[32m        $query->andFilterWhere(['like', 'status_name', $this->status_name]);[m
+[32m+[m
+[32m+[m[32m        return $dataProvider;[m
+[32m+[m[32m    }[m
+[32m+[m[32m}[m
+[1mdiff --git a/backend/models/search/UserType.php b/backend/models/search/UserType.php[m
+[1mnew file mode 100644[m
+[1mindex 0000000..c88596b[m
+[1m--- /dev/null[m
+[1m+++ b/backend/models/search/UserType.php[m
+[36m@@ -0,0 +1,67 @@[m
+[32m+[m[32m<?php[m
+[32m+[m
+[32m+[m[32mnamespace backend\models\search;[m
+[32m+[m
+[32m+[m[32muse Yii;[m
+[32m+[m[32muse yii\base\Model;[m
+[32m+[m[32muse yii\data\ActiveDataProvider;[m
+[32m+[m[32muse backend\models\UserType as UserTypeModel;[m
+[32m+[m
+[32m+[m[32m/**[m
+[32m+[m[32m * UserType represents the model behind the search form about `backend\models\UserType`.[m
+[32m+[m[32m */[m
+[32m+[m[32mclass UserType extends UserTypeModel[m
+[32m+[m[32m{[m
+[32m+[m[32m    /**[m
+[32m+[m[32m     * @inheritdoc[m
+[32m+[m[32m     */[m
+[32m+[m[32m    public function rules()[m
+[32m+[m[32m    {[m
+[32m+[m[32m        return [[m
+[32m+[m[32m            [['id', 'user_type_value'], 'integer'],[m
+[32m+[m[32m            [['user_type_name'], 'safe'],[m
+[32m+[m[32m        ];[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    /**[m
+[32m+[m[32m     * @inheritdoc[m
+[32m+[m[32m     */[m
+[32m+[m[32m    public function scenarios()[m
+[32m+[m[32m    {[m
+[32m+[m[32m        // bypass scenarios() implementation in the parent class[m
+[32m+[m[32m        return Model::scenarios();[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    /**[m
+[32m+[m[32m     * Creates data provider instance with search query applied[m
+[32m+[m[32m     *[m
+[32m+[m[32m     * @param array $params[m
+[32m+[m[32m     *[m
+[32m+[m[32m     * @return ActiveDataProvider[m
+[32m+[m[32m     */[m
+[32m+[m[32m    public function search($params)[m
+[32m+[m[32m    {[m
+[32m+[m[32m        $query = UserTypeModel::find();[m
+[32m+[m
+[32m+[m[32m        $dataProvider = new ActiveDataProvider([[m
+[32m+[m[32m            'query' => $query,[m
+[32m+[m[32m        ]);[m
+[32m+[m
+[32m+[m[32m        $this->load($params);[m
+[32m+[m
+[32m+[m[32m        if (!$this->validate()) {[m
+[32m+[m[32m            // uncomment the following line if you do not want to return any records when validation fails[m
+[32m+[m[32m            // $query->where('0=1');[m
+[32m+[m[32m            return $dataProvider;[m
+[32m+[m[32m        }[m
+[32m+[m
+[32m+[m[32m        $query->andFilterWhere([[m
+[32m+[m[32m            'id' => $this->id,[m
+[32m+[m[32m            'user_type_value' => $this->user_type_value,[m
+[32m+[m[32m        ]);[m
+[32m+[m
+[32m+[m[32m        $query->andFilterWhere(['like', 'user_type_name', $this->user_type_name]);[m
+[32m+[m
+[32m+[m[32m        return $dataProvider;[m
+[32m+[m[32m    }[m
+[32m+[m[32m}[m
+[1mdiff --git a/backend/views/comment/_form.php b/backend/views/comment/_form.php[m
+[1mnew file mode 100644[m
+[1mindex 0000000..ba90e0e[m
+[1m--- /dev/null[m
+[1m+++ b/backend/views/comment/_form.php[m
+[36m@@ -0,0 +1,36 @@[m
+[32m+[m[32m<?php[m
+[32m+[m[32muse yii\helpers\Html;[m
+[32m+[m[32muse yii\widgets\ActiveForm;[m
+[32m+[m
+[32m+[m[32m/* @var $this yii\web\View */[m
+[32m+[m[32m/* @var $model common\models\Comment */[m
+[32m+[m[32m/* @var $form yii\widgets\ActiveForm */[m
+[32m+[m[32m?>[m
+[32m+[m
+[32m+[m[32m<div class="comment-form">[m
+[32m+[m
+[32m+[m[32m    <?php $form = ActiveForm::begin(); ?>[m
+[32m+[m
+[32m+[m[32m    <?= $form->field($model, 'content')->textarea(['rows' => 6]) ?>[m
+[32m+[m
+[32m+[m[32m    <?= $form->field($model, 'status')->textInput() ?>[m
+[32m+[m
+[32m+[m[32m    <?= $form->field($model, 'create_time')->textInput() ?>[m
+[32m+[m
+[32m+[m[32m    <?= $form->field($model, 'user_id')->textInput(['maxlength' => true]) ?>[m
+[32m+[m
+[32m+[m[32m    <?= $form->field($model, 'email')->textInput(['maxlength' => true]) ?>[m
+[32m+[m
+[32m+[m[32m    <?= $form->field($model, 'url')->textInput(['maxlength' => true]) ?>[m
+[32m+[m
+[32m+[m[32m    <?= $form->field($model, 'post_id')->textInput() ?>[m
+[32m+[m
+[32m+[m[41m  [m
+[32m+[m[32m<?php if (!Yii::$app->request->isAjax){ ?>[m
+[32m+[m[41m  [m	[32m<div class="form-group">[m
+[32m+[m[32m        <?= Html::submitButton($model->isNewRecord ? Yii::t('app', 'Create') : Yii::t('app', 'Update'), ['class' => $model->isNewRecord ? 'btn btn-success' : 'btn btn-primary']) ?>[m
+[32m+[m[32m    </div>[m
+[32m+[m[32m<?php } ?>[m
+[32m+[m
+[32m+[m[32m    <?php ActiveForm::end(); ?>[m
+[32m+[m[32m</div>[m
+[1mdiff --git a/backend/views/comment/_grid.php b/backend/views/comment/_grid.php[m
+[1mnew file mode 100644[m
+[1mindex 0000000..d11b2c9[m
+[1m--- /dev/null[m
+[1m+++ b/backend/views/comment/_grid.php[m
+[36m@@ -0,0 +1,119 @@[m
+[32m+[m[32m<?php[m
+[32m+[m[32muse yii\helpers\Url;[m
+[32m+[m[32muse yii\widgets\Pjax;[m
+[32m+[m[32muse johnitvn\ajaxcrud\GridView;[m
+[32m+[m[32muse yii\helpers\Html;[m
+[32m+[m[32muse backend\controllers\CommentController;[m[41m [m
+[32m+[m
+[32m+[m[32m/* @var $this yii\web\View */[m
+[32m+[m[32m/* @var $searchModel common\models\search\CommentSearch */[m
+[32m+[m[32m/* @var $dataProvider yii\data\ActiveDataProvider */[m
+[32m+[m
+[32m+[m
+[32m+[m[32m?>[m
+[32m+[m
+[32m+[m
+[32m+[m[32m<?php[m
+[32m+[m
+[32m+[m[32m/**[m
+[32m+[m[32m* Grid toolbar config[m
+[32m+[m[32m*/[m
+[32m+[m[32m$createActionButton = Html::a('<i class="glyphicon glyphicon-plus"></i>',['create'],['data-modal-title'=>'Create new Comment','class'=>'create-action-button btn btn-default']);[m
+[32m+[m[32m$refreshActionButton = Html::a('<i class="glyphicon glyphicon-repeat"></i>',['index'],['data-pjax'=>1,'class'=>'btn btn-default']);[m
+[32m+[m[32m$fullScreenActionButton = Html::a('<i class="glyphicon glyphicon-resize-full"></i>','#',['class'=>'btn-toggle-fullscreen btn btn-default']);[m
+[32m+[m
+[32m+[m
+[32m+[m[32m$bulkDeleteButton = Html::a('<i class="glyphicon glyphicon-trash"></i>&nbsp; Delete All Selected',[m
+[32m+[m[32m                                 ["bulk-delete"] ,[m
+[32m+[m[32m                                 [[m
+[32m+[m[32m                                     "class"=>"btn-bulk-delete btn btn-danger",[m
+[32m+[m[32m                                     "data-method"=>"post",[m
+[32m+[m[32m                                     "title"=>"Delete All Selected",[m
+[32m+[m[32m                                     "data-confirm-message"=>"Are you sure to delete all this items?"[m
+[32m+[m[32m                                 ]);[m
+[32m+[m
+[32m+[m
+[32m+[m[32m/**[m
+[32m+[m[32m* Grid column config[m
+[32m+[m[32m*/[m
+[32m+[m[32m$gridColumns = [[m
+[32m+[m[32m    [[m
+[32m+[m[32m        'class' => 'kartik\grid\CheckboxColumn',[m
+[32m+[m[32m        'width' => '20px',[m
+[32m+[m[32m    ],[m
+[32m+[m[32m    [[m
+[32m+[m[32m        'class' => 'kartik\grid\SerialColumn',[m
+[32m+[m[32m        'width' => '30px',[m
+[32m+[m[32m    ],[m
+[32m+[m[32m    // [[m
+[32m+[m[32m        // 'class'=>'\kartik\grid\DataColumn',[m
+[32m+[m[32m        // 'attribute'=>'id',[m
+[32m+[m[32m    // ],[m
+[32m+[m[32m    [[m
+[32m+[m[32m        'class'=>'\kartik\grid\DataColumn',[m
+[32m+[m[32m        'attribute'=>'content',[m
+[32m+[m[32m    ],[m
+[32m+[m[32m    [[m
+[32m+[m[32m        'class'=>'\kartik\grid\DataColumn',[m
+[32m+[m[32m        'attribute'=>'status',[m
+[32m+[m[32m    ],[m
+[32m+[m[32m    [[m
+[32m+[m[32m        'class'=>'\kartik\grid\DataColumn',[m
+[32m+[m[32m        'attribute'=>'create_time',[m
+[32m+[m[32m    ],[m
+[32m+[m[32m    [[m
+[32m+[m[32m        'class'=>'\kartik\grid\DataColumn',[m
+[32m+[m[32m        'attribute'=>'user_id',[m
+[32m+[m[32m    ],[m
+[32m+[m[32m    [[m
+[32m+[m[32m        'class'=>'\kartik\grid\DataColumn',[m
+[32m+[m[32m        'attribute'=>'email',[m
+[32m+[m[32m    ],[m
+[32m+[m[32m    // [[m
+[32m+[m[32m        // 'class'=>'\kartik\grid\DataColumn',[m
+[32m+[m[32m        // 'attribute'=>'url',[m
+[32m+[m[32m    // ],[m
+[32m+[m[32m    // [[m
+[32m+[m[32m        // 'class'=>'\kartik\grid\DataColumn',[m
+[32m+[m[32m        // 'attribute'=>'post_id',[m
+[32m+[m[32m    // ],[m
+[32m+[m[32m    [[m
+[32m+[m[32m        'class' => 'kartik\grid\ActionColumn',[m
+[32m+[m[32m        'dropdown' => false,[m
+[32m+[m[32m        'vAlign'=>'middle',[m
+[32m+[m[32m        'urlCreator' => function($action, $model, $key, $index) {[m[41m [m
+[32m+[m[32m                return Url::to([$action,'id'=>$key]);[m
+[32m+[m[32m        },[m
+[32m+[m[32m        'viewOptions'=>['class'=>'view-action-button','title'=>'View', 'data-toggle'=>'tooltip','data-modal-title'=>'View Comment'],[m
+[32m+[m[32m        'updateOptions'=>['class'=>'update-action-button','title'=>'Update', 'data-toggle'=>'tooltip','data-modal-title'=>'Update Comment'],[m
+[32m+[m[32m        'deleteOptions'=>['class'=>'delete-action-button','title'=>'Delete', 'data-toggle'=>'tooltip','data-confirm-message'=>'Are you sure to delete this item?'],[m[41m [m
+[32m+[m[32m    ],[m
+[32m+[m
+[32m+[m[32m];[m[41m   [m
+[32m+[m
+[32m+[m[32mecho GridView::widget([[m
+[32m+[m[32m    'id'=>'crud-datatable',[m
+[32m+[m[32m    'dataProvider' => $dataProvider,[m
+[32m+[m[32m    'filterModel' => $searchModel,[m
+[32m+[m[32m    'columns' => $gridColumns,[m
+[32m+[m[32m    'toolbar' =>  [['content'=> $createActionButton.$refreshActionButton.$fullScreenActionButton.'{toogleDataNoContainer}'],'{export}'],[m
+[32m+[m[32m    'bordered' => true,[m
+[32m+[m[32m    'striped' => true,[m
+[32m+[m[32m    'condensed' => true,[m
+[32m+[m[32m    'responsive' =>true,[m
+[32m+[m[32m    'responsiveWrap' => false,[m
+[32m+[m[32m    'hover' => false,[m
+[32m+[m[32m    'showPageSummary' => false,[m[41m        [m
+[32m+[m[32m    'panel' => [[m
+[32m+[m[32m        'type' => 'primary',[m[41m [m
+[32m+[m[32m        'heading' => '<i class="glyphicon glyphicon glyphicon-list"></i>  Lists',[m
+[32m+[m[32m        'before' => '<em>* Resize table columns just like a spreadsheet by dragging the column edges.</em>',[m
+[32m+[m[32m        'after' =>  '<div class="pull-left"></div><div class="pull-right">'.$bulkDeleteButton.'</div><div class="clearfix"></div>',[m
+[32m+[m[32m        ],[m[41m    [m
+[32m+[m
+[32m+[m[32m]);[m
+[32m+[m
+[32m+[m[32m?>[m
+[32m+[m
+[32m+[m[41m   [m
+[32m+[m[41m  [m
+[1mdiff --git a/backend/views/comment/create.php b/backend/views/comment/create.php[m
+[1mnew file mode 100644[m
+[1mindex 0000000..3f32744[m
+[1m--- /dev/null[m
+[1m+++ b/backend/views/comment/create.php[m
+[36m@@ -0,0 +1,14 @@[m
+[32m+[m[32m<?php[m
+[32m+[m
+[32m+[m[32muse yii\helpers\Html;[m
+[32m+[m
+[32m+[m
+[32m+[m[32m/* @var $this yii\web\View */[m
+[32m+[m[32m/* @var $model common\models\Comment */[m
+[32m+[m
+[32m+[m[32m?>[m
+[32m+[m[32m<div class="comment-create">[m
+[32m+[m[32m    <?= $this->render('_form', [[m
+[32m+[m[32m        'model' => $model,[m
+[32m+[m[32m    ]) ?>[m
+[32m+[m[32m</div>[m
+[1mdiff --git a/backend/views/comment/index.php b/backend/views/comment/index.php[m
+[1mnew file mode 100644[m
+[1mindex 0000000..74968e0[m
+[1m--- /dev/null[m
+[1m+++ b/backend/views/comment/index.php[m
+[36m@@ -0,0 +1,42 @@[m
+[32m+[m[32m<?php[m
+[32m+[m
+[32m+[m[32muse yii\helpers\Html;[m
+[32m+[m[32muse johnitvn\ajaxcrudassets\CrudAsset;[m[41m [m
+[32m+[m[32muse yii\helpers\Url;[m
+[32m+[m
+[32m+[m[32m/* @var $this yii\web\View */[m
+[32m+[m[32m/* @var $searchModel common\models\search\CommentSearch */[m
+[32m+[m[32m/* @var $dataProvider yii\data\ActiveDataProvider */[m
+[32m+[m
+[32m+[m[32m$this->title = Yii::t('app', 'Comments');[m
+[32m+[m[32m$this->params['breadcrumbs'][] = $this->title;[m
+[32m+[m
+[32m+[m[32mCrudAsset::register($this);[m
+[32m+[m
+[32m+[m[32m?>[m
+[32m+[m[32m<div class="comment-index">[m
+[32m+[m[32m    <div id="ajaxCrudDatatable">[m
+[32m+[m[32m        <?php[m
+[32m+[m[32m                            echo $this->render('_grid', [[m[41m [m
+[32m+[m[32m                    'searchModel' => $searchModel,[m
+[32m+[m[32m                    'dataProvider' => $dataProvider,[m
+[32m+[m[32m                ]);[m
+[32m+[m[41m                        [m
+[32m+[m[32m        ?>[m
+[32m+[m[32m    </div>[m
+[32m+[m[32m</div>[m
+[32m+[m
+[32m+[m[32m<div id="ajaxCrubModal" class="fade modal" role="dialog" tabindex="-1">[m
+[32m+[m[32m<div class="modal-dialog ">[m
+[32m+[m[32m<div class="modal-content">[m
+[32m+[m[32m<div class="modal-header">[m
+[32m+[m[32m<button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>[m
+[32m+[m
+[32m+[m[32m</div>[m
+[32m+[m[32m<div class="modal-body">[m
+[32m+[m
+[32m+[m[32m</div>[m
+[32m+[m
+[32m+[m[32m</div>[m
+[32m+[m[32m</div>[m
+[32m+[m[32m</div>[m
+[1mdiff --git a/backend/views/comment/update.php b/backend/views/comment/update.php[m
+[1mnew file mode 100644[m
+[1mindex 0000000..4e45cc3[m
+[1m--- /dev/null[m
+[1m+++ b/backend/views/comment/update.php[m
+[36m@@ -0,0 +1,14 @@[m
+[32m+[m[32m<?php[m
+[32m+[m
+[32m+[m[32muse yii\helpers\Html;[m
+[32m+[m
+[32m+[m[32m/* @var $this yii\web\View */[m
+[32m+[m[32m/* @var $model common\models\Comment */[m
+[32m+[m[32m?>[m
+[32m+[m[32m<div class="comment-update">[m
+[32m+[m
+[32m+[m[32m    <?= $this->render('_form', [[m
+[32m+[m[32m        'model' => $model,[m
+[32m+[m[32m    ]) ?>[m
+[32m+[m
+[32m+[m[32m</div>[m
+[1mdiff --git a/backend/views/comment/view.php b/backend/views/comment/view.php[m
+[1mnew file mode 100644[m
+[1mindex 0000000..d075299[m
+[1m--- /dev/null[m
+[1m+++ b/backend/views/comment/view.php[m
+[36m@@ -0,0 +1,25 @@[m
+[32m+[m[32m<?php[m
+[32m+[m
+[32m+[m[32muse yii\widgets\DetailView;[m
+[32m+[m
+[32m+[m[32m/* @var $this yii\web\View */[m
+[32m+[m[32m/* @var $model common\models\Comment */[m
+[32m+[m[32m?>[m
+[32m+[m[32m<div class="comment-view">[m
+[32m+[m
+[32m+[m[41m  [m
+[32m+[m[32m    <?= DetailView::widget([[m
+[32m+[m[32m        'model' => $model,[m
+[32m+[m[32m        'attributes' => [[m
+[32m+[m[32m            'id',[m
+[32m+[m[32m            'content:ntext',[m
+[32m+[m[32m            'status',[m
+[32m+[m[32m            'create_time:datetime',[m
+[32m+[m[32m            'user_id',[m
+[32m+[m[32m            'email:email',[m
+[32m+[m[32m            'url:url',[m
+[32m+[m[32m            'post_id',[m
+[32m+[m[32m        ],[m
+[32m+[m[32m    ]) ?>[m
+[32m+[m
+[32m+[m[32m</div>[m
+[1mdiff --git a/backend/views/layouts/main.php b/backend/views/layouts/main.php[m
+[1mindex f046488..7e76b01 100644[m
+[1m--- a/backend/views/layouts/main.php[m
+[1m+++ b/backend/views/layouts/main.php[m
+[36m@@ -33,6 +33,14 @@[m [mAppAsset::register($this);[m
+             ]);[m
+             $menuItems = [[m
+                 ['label' => 'Home', 'url' => ['/site/index']],[m
+[32m+[m[32m                ['label' => 'Post', 'url' => ['/post']],[m
+[32m+[m[32m                ['label' => 'Comment', 'url' => ['/comment']],[m
+[32m+[m[32m                ['label' => 'Lookup', 'url' => ['/lookup']],[m
+[32m+[m[32m                ['label' => 'Tag', 'url' => ['/tag']],[m
+[32m+[m[32m                ['label' => 'Role', 'url' => ['/role']],[m
+[32m+[m[32m                ['label' => 'Status', 'url' => ['/status']],[m
+[32m+[m[32m                ['label' => 'User Type', 'url' => ['/user-type']],[m
+[32m+[m[32m                ['label' => 'User', 'url' => ['/user']],[m
+             ];[m
+             if (Yii::$app->user->isGuest) {[m
+                 $menuItems[] = ['label' => 'Login', 'url' => ['/site/login']];[m
+[1mdiff --git a/backend/views/lookup/_form.php b/backend/views/lookup/_form.php[m
+[1mnew file mode 100644[m
+[1mindex 0000000..23990a3[m
+[1m--- /dev/null[m
+[1m+++ b/backend/views/lookup/_form.php[m
+[36m@@ -0,0 +1,30 @@[m
+[32m+[m[32m<?php[m
+[32m+[m[32muse yii\helpers\Html;[m
+[32m+[m[32muse yii\widgets\ActiveForm;[m
+[32m+[m
+[32m+[m[32m/* @var $this yii\web\View */[m
+[32m+[m[32m/* @var $model common\models\Lookup */[m
+[32m+[m[32m/* @var $form yii\widgets\ActiveForm */[m
+[32m+[m[32m?>[m
+[32m+[m
+[32m+[m[32m<div class="lookup-form">[m
+[32m+[m
+[32m+[m[32m    <?php $form = ActiveForm::begin(); ?>[m
+[32m+[m
+[32m+[m[32m    <?= $form->field($model, 'name')->textInput(['maxlength' => true]) ?>[m
+[32m+[m
+[32m+[m[32m    <?= $form->field($model, 'code')->textInput() ?>[m
+[32m+[m
+[32m+[m[32m    <?= $form->field($model, 'type')->textInput(['maxlength' => true]) ?>[m
+[32m+[m
+[32m+[m[32m    <?= $form->field($model, 'position')->textInput() ?>[m
+[32m+[m
+[32m+[m[41m  [m
+[32m+[m[32m<?php if (!Yii::$app->request->isAjax){ ?>[m
+[32m+[m[41m  [m	[32m<div class="form-group">[m
+[32m+[m[32m        <?= Html::submitButton($model->isNewRecord ? Yii::t('app', 'Create') : Yii::t('app', 'Update'), ['class' => $model->isNewRecord ? 'btn btn-success' : 'btn btn-primary']) ?>[m
+[32m+[m[32m    </div>[m
+[32m+[m[32m<?php } ?>[m
+[32m+[m
+[32m+[m[32m    <?php ActiveForm::end(); ?>[m
+[32m+[m[32m</div>[m
+[1mdiff --git a/backend/views/lookup/_grid.php b/backend/views/lookup/_grid.php[m
+[1mnew file mode 100644[m
+[1mindex 0000000..de526cc[m
+[1m--- /dev/null[m
+[1m+++ b/backend/views/lookup/_grid.php[m
+[36m@@ -0,0 +1,107 @@[m
+[32m+[m[32m<?php[m
+[32m+[m[32muse yii\helpers\Url;[m
+[32m+[m[32muse yii\widgets\Pjax;[m
+[32m+[m[32muse johnitvn\ajaxcrud\GridView;[m
+[32m+[m[32muse yii\helpers\Html;[m
+[32m+[m[32muse backend\controllers\LookupController;[m[41m [m
+[32m+[m
+[32m+[m[32m/* @var $this yii\web\View */[m
+[32m+[m[32m/* @var $searchModel common\models\search\LookupSearch */[m
+[32m+[m[32m/* @var $dataProvider yii\data\ActiveDataProvider */[m
+[32m+[m
+[32m+[m
+[32m+[m[32m?>[m
+[32m+[m
+[32m+[m
+[32m+[m[32m<?php[m
+[32m+[m
+[32m+[m[32m/**[m
+[32m+[m[32m* Grid toolbar config[m
+[32m+[m[32m*/[m
+[32m+[m[32m$createActionButton = Html::a('<i class="glyphicon glyphicon-plus"></i>',['create'],['data-modal-title'=>'Create new Lookup','class'=>'create-action-button btn btn-default']);[m
+[32m+[m[32m$refreshActionButton = Html::a('<i class="glyphicon glyphicon-repeat"></i>',['index'],['data-pjax'=>1,'class'=>'btn btn-default']);[m
+[32m+[m[32m$fullScreenActionButton = Html::a('<i class="glyphicon glyphicon-resize-full"></i>','#',['class'=>'btn-toggle-fullscreen btn btn-default']);[m
+[32m+[m
+[32m+[m
+[32m+[m[32m$bulkDeleteButton = Html::a('<i class="glyphicon glyphicon-trash"></i>&nbsp; Delete All Selected',[m
+[32m+[m[32m                                 ["bulk-delete"] ,[m
+[32m+[m[32m                                 [[m
+[32m+[m[32m                                     "class"=>"btn-bulk-delete btn btn-danger",[m
+[32m+[m[32m                                     "data-method"=>"post",[m
+[32m+[m[32m                                     "title"=>"Delete All Selected",[m
+[32m+[m[32m                                     "data-confirm-message"=>"Are you sure to delete all this items?"[m
+[32m+[m[32m                                 ]);[m
+[32m+[m
+[32m+[m
+[32m+[m[32m/**[m
+[32m+[m[32m* Grid column config[m
+[32m+[m[32m*/[m
+[32m+[m[32m$gridColumns = [[m
+[32m+[m[32m    [[m
+[32m+[m[32m        'class' => 'kartik\grid\CheckboxColumn',[m
+[32m+[m[32m        'width' => '20px',[m
+[32m+[m[32m    ],[m
+[32m+[m[32m    [[m
+[32m+[m[32m        'class' => 'kartik\grid\SerialColumn',[m
+[32m+[m[32m        'width' => '30px',[m
+[32m+[m[32m    ],[m
+[32m+[m[32m    // [[m
+[32m+[m[32m        // 'class'=>'\kartik\grid\DataColumn',[m
+[32m+[m[32m        // 'attribute'=>'id',[m
+[32m+[m[32m    // ],[m
+[32m+[m[32m    [[m
+[32m+[m[32m        'class'=>'\kartik\grid\DataColumn',[m
+[32m+[m[32m        'attribute'=>'name',[m
+[32m+[m[32m    ],[m
+[32m+[m[32m    [[m
+[32m+[m[32m        'class'=>'\kartik\grid\DataColumn',[m
+[32m+[m[32m        'attribute'=>'code',[m
+[32m+[m[32m    ],[m
+[32m+[m[32m    [[m
+[32m+[m[32m        'class'=>'\kartik\grid\DataColumn',[m
+[32m+[m[32m        'attribute'=>'type',[m
+[32m+[m[32m    ],[m
+[32m+[m[32m    [[m
+[32m+[m[32m        'class'=>'\kartik\grid\DataColumn',[m
+[32m+[m[32m        'attribute'=>'position',[m
+[32m+[m[32m    ],[m
+[32m+[m[32m    [[m
+[32m+[m[32m        'class' => 'kartik\grid\ActionColumn',[m
+[32m+[m[32m        'dropdown' => false,[m
+[32m+[m[32m        'vAlign'=>'middle',[m
+[32m+[m[32m        'urlCreator' => function($action, $model, $key, $index) {[m[41m [m
+[32m+[m[32m                return Url::to([$action,'id'=>$key]);[m
+[32m+[m[32m        },[m
+[32m+[m[32m        'viewOptions'=>['class'=>'view-action-button','title'=>'View', 'data-toggle'=>'tooltip','data-modal-title'=>'View Lookup'],[m
+[32m+[m[32m        'updateOptions'=>['class'=>'update-action-button','title'=>'Update', 'data-toggle'=>'tooltip','data-modal-title'=>'Update Lookup'],[m
+[32m+[m[32m        'deleteOptions'=>['class'=>'delete-action-button','title'=>'Delete', 'data-toggle'=>'tooltip','data-confirm-message'=>'Are you sure to delete this item?'],[m[41m [m
+[32m+[m[32m    ],[m
+[32m+[m
+[32m+[m[32m];[m[41m   [m
+[32m+[m
+[32m+[m[32mecho GridView::widget([[m
+[32m+[m[32m    'id'=>'crud-datatable',[m
+[32m+[m[32m    'dataProvider' => $dataProvider,[m
+[32m+[m[32m    'filterModel' => $searchModel,[m
+[32m+[m[32m    'columns' => $gridColumns,[m
+[32m+[m[32m    'toolbar' =>  [['content'=> $createActionButton.$refreshActionButton.$fullScreenActionButton.'{toogleDataNoContainer}'],'{export}'],[m
+[32m+[m[32m    'bordered' => true,[m
+[32m+[m[32m    'striped' => true,[m
+[32m+[m[32m    'condensed' => true,[m
+[32m+[m[32m    'responsive' =>true,[m
+[32m+[m[32m    'responsiveWrap' => false,[m
+[32m+[m[32m    'hover' => false,[m
+[32m+[m[32m    'showPageSummary' => false,[m[41m        [m
+[32m+[m[32m    'panel' => [[m
+[32m+[m[32m        'type' => 'primary',[m[41m [m
+[32m+[m[32m        'heading' => '<i class="glyphicon glyphicon glyphicon-list"></i>  Lists',[m
+[32m+[m[32m        'before' => '<em>* Resize table columns just like a spreadsheet by dragging the column edges.</em>',[m
+[32m+[m[32m        'after' =>  '<div class="pull-left"></div><div class="pull-right">'.$bulkDeleteButton.'</div><div class="clearfix"></div>',[m
+[32m+[m[32m        ],[m[41m    [m
+[32m+[m
+[32m+[m[32m]);[m
+[32m+[m
+[32m+[m[32m?>[m
+[32m+[m
+[32m+[m[41m   [m
+[32m+[m[41m  [m
+[1mdiff --git a/backend/views/lookup/create.php b/backend/views/lookup/create.php[m
+[1mnew file mode 100644[m
+[1mindex 0000000..30bc5c2[m
+[1m--- /dev/null[m
+[1m+++ b/backend/views/lookup/create.php[m
+[36m@@ -0,0 +1,14 @@[m
+[32m+[m[32m<?php[m
+[32m+[m
+[32m+[m[32muse yii\helpers\Html;[m
+[32m+[m
+[32m+[m
+[32m+[m[32m/* @var $this yii\web\View */[m
+[32m+[m[32m/* @var $model common\models\Lookup */[m
+[32m+[m
+[32m+[m[32m?>[m
+[32m+[m[32m<div class="lookup-create">[m
+[32m+[m[32m    <?= $this->render('_form', [[m
+[32m+[m[32m        'model' => $model,[m
+[32m+[m[32m    ]) ?>[m
+[32m+[m[32m</div>[m
+[1mdiff --git a/backend/views/lookup/index.php b/backend/views/lookup/index.php[m
+[1mnew file mode 100644[m
+[1mindex 0000000..872f867[m
+[1m--- /dev/null[m
+[1m+++ b/backend/views/lookup/index.php[m
+[36m@@ -0,0 +1,42 @@[m
+[32m+[m[32m<?php[m
+[32m+[m
+[32m+[m[32muse yii\helpers\Html;[m
+[32m+[m[32muse johnitvn\ajaxcrudassets\CrudAsset;[m[41m [m
+[32m+[m[32muse yii\helpers\Url;[m
+[32m+[m
+[32m+[m[32m/* @var $this yii\web\View */[m
+[32m+[m[32m/* @var $searchModel common\models\search\LookupSearch */[m
+[32m+[m[32m/* @var $dataProvider yii\data\ActiveDataProvider */[m
+[32m+[m
+[32m+[m[32m$this->title = Yii::t('app', 'Lookups');[m
+[32m+[m[32m$this->params['breadcrumbs']
